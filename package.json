@@ -1,6 +1,6 @@
 {
   "name": "com.bb.data-utilities",
-  "version": "0.0.1",
+  "version": "1.0.0",
   "displayName": "Data Utilities",
   "description": "Some basic data management tools such as serialization and saving to file in a readable file format."
 }
