@@ -31,11 +31,31 @@ namespace DataUtilities.Serializer
         readonly byte[] data = Array.Empty<byte>();
         int currentIndex;
 
+        readonly Dictionary<Type, Delegate> typeDeserializers;
+
         /// <param name="data">The raw binary data you want to deserialize</param>
         public Deserializer(byte[] data)
         {
             this.data = data;
             currentIndex = 0;
+
+            typeDeserializers = new Dictionary<Type, Delegate>()
+            {
+                { typeof(int), new Func<int>(DeserializeInt32) },
+                { typeof(float), new Func<float>(DeserializeFloat) },
+                { typeof(bool), new Func<bool>(DeserializeBoolean) },
+                { typeof(byte), new Func<byte>(DeserializeByte) },
+                { typeof(char), new Func<char>(DeserializeChar) },
+                { typeof(string), new Func<string>(DeserializeString) },
+                { typeof(double), new Func<double>(DeserializeDouble) },
+            };
+        }
+
+        Func<T> GetDeserializerForType<T>()
+        {
+            if (!typeDeserializers.TryGetValue(typeof(T), out Delegate method))
+            { throw new NotImplementedException($"Deserializer for type {typeof(T)} not found"); }
+            return (Func<T>)method;
         }
 
         public T[] DeserializeArray<T>()
@@ -45,6 +65,16 @@ namespace DataUtilities.Serializer
             for (int i = 0; i < length; i++)
             {
                 result[i] = (T)Deserialize<T>();
+            }
+            return result;
+        }
+        public T[][] DeserializeArray2D<T>()
+        {
+            int length = DeserializeInt32();
+            T[][] result = new T[length][];
+            for (int i = 0; i < length; i++)
+            {
+                result[i] = DeserializeArray<T>();
             }
             return result;
         }
@@ -74,38 +104,10 @@ namespace DataUtilities.Serializer
         /// </summary>
         /// <typeparam name="T">
         /// The following data type.
-        /// Possible types:
-        /// <list type="bullet">
-        /// <item><seealso cref="int"/></item>
-        /// <item><seealso cref="short"/></item>
-        /// <item><seealso cref="char"/></item>
-        /// <item><seealso cref="string"/></item>
-        /// <item><seealso cref="bool"/></item>
-        /// <item><seealso cref="float"/></item>
-        /// <item><seealso cref="byte"/></item>
-        /// </list>
         /// </typeparam>
         /// <returns>The deserialized data whose type is <typeparamref name="T"/>.</returns>
         /// <exception cref="NotImplementedException"></exception>
-        public object Deserialize<T>()
-        {
-            if (typeof(T) == typeof(int))
-            { return DeserializeInt32(); }
-            if (typeof(T) == typeof(short))
-            { return DeserializeInt16(); }
-            if (typeof(T) == typeof(char))
-            { return DeserializeChar(); }
-            if (typeof(T) == typeof(string))
-            { return DeserializeString(); }
-            if (typeof(T) == typeof(bool))
-            { return DeserializeBoolean(); }
-            if (typeof(T) == typeof(float))
-            { return DeserializeFloat(); }
-            if (typeof(T) == typeof(byte))
-            { return DeserializeByte(); }
-
-            throw new NotImplementedException();
-        }
+        public T Deserialize<T>() => GetDeserializerForType<T>().Invoke();
 
         /// <summary>
         /// Deserializes the following <see cref="System.Int32"/> data (4 bytes)
@@ -157,6 +159,16 @@ namespace DataUtilities.Serializer
             return BitConverter.ToSingle(data, 0);
         }
         /// <summary>
+        /// Deserializes the following <see cref="System.Single"/> data (4 bytes)
+        /// </summary>
+        public double DeserializeDouble()
+        {
+            var data = this.data.Get(currentIndex, 8);
+            currentIndex += 4;
+            if (BitConverter.IsLittleEndian) Array.Reverse(data);
+            return BitConverter.ToDouble(data, 0);
+        }
+        /// <summary>
         /// Deserializes the following <see cref="System.Boolean"/> data (1 bytes)
         /// </summary>
         public bool DeserializeBoolean()
@@ -205,17 +217,21 @@ namespace DataUtilities.Serializer
             instance.Deserialize(this);
             return instance;
         }
-        ISerializable<T> DeserializeObjectUnsafe<T>()
-        {
-            var instance = (ISerializable<T>)Activator.CreateInstance(typeof(T));
-            instance.Deserialize(this);
-            return instance;
-        }
         public T DeserializeObject<T>(Func<Deserializer, T> callback)
         {
             return callback.Invoke(this);
         }
-        public Dictionary<TKey, TValue> DeserializeDictionary<TKey, TValue>(bool keyIsObj, bool valIsObj)
+        public T[] DeserializeArray<T>(Func<Deserializer, T> callback)
+        {
+            int length = DeserializeInt32();
+            T[] result = new T[length];
+            for (int i = 0; i < length; i++)
+            {
+                result[i] = callback.Invoke(this);
+            }
+            return result;
+        }
+        public Dictionary<TKey, TValue> DeserializeDictionary<TKey, TValue>()
         {
             int length = DeserializeInt32();
             if (length == -1) return null;
@@ -223,8 +239,8 @@ namespace DataUtilities.Serializer
 
             for (int i = 0; i < length; i++)
             {
-                var key = keyIsObj ? (TKey)DeserializeObjectUnsafe<TKey>() : (TKey)Deserialize<TKey>();
-                var value = valIsObj ? (TValue)DeserializeObjectUnsafe<TValue>() : (TValue)Deserialize<TValue>();
+                TKey key = Deserialize<TKey>();
+                TValue value = Deserialize<TValue>();
                 result.Add(key, value);
             }
 
@@ -244,6 +260,30 @@ namespace DataUtilities.Serializer
 
         public byte[] Result => result.ToArray();
 
+        readonly Dictionary<Type, Delegate> typeSerializers;
+
+        public Serializer()
+        {
+            typeSerializers = new Dictionary<Type, Delegate>()
+            {
+                { typeof(int), new Action<int>(v => Serialize(v)) },
+                { typeof(float), new Action<float>(v => Serialize(v)) },
+                { typeof(bool), new Action<bool>(v => Serialize(v)) },
+                { typeof(byte), new Action<byte>(v => Serialize(v)) },
+                { typeof(short), new Action<short>(v => Serialize(v)) },
+                { typeof(char), new Action<char>(v => Serialize(v)) },
+                { typeof(string), new Action<string>(v => Serialize(v)) },
+                { typeof(double), new Action<double>(v => Serialize(v)) },
+            };
+        }
+
+        Action<T> GetSerializerForType<T>()
+        {
+            if (!typeSerializers.TryGetValue(typeof(T), out Delegate method))
+            { throw new NotImplementedException($"Serializer for type {typeof(T)} not found"); }
+            return (Action<T>)method;
+        }
+
         /// <summary>
         /// Serializes the given <see cref="int"/>
         /// </summary>
@@ -257,6 +297,15 @@ namespace DataUtilities.Serializer
         /// Serializes the given <see cref="float"/>
         /// </summary>
         public void Serialize(float v)
+        {
+            var result = BitConverter.GetBytes(v);
+            if (BitConverter.IsLittleEndian) Array.Reverse(result);
+            this.result.AddRange(result);
+        }
+        /// <summary>
+        /// Serializes the given <see cref="double"/>
+        /// </summary>
+        public void Serialize(double v)
         {
             var result = BitConverter.GetBytes(v);
             if (BitConverter.IsLittleEndian) Array.Reverse(result);
@@ -327,58 +376,13 @@ namespace DataUtilities.Serializer
             }
         }
         /// <summary>
-        /// Serializes the given array of <see cref="short"/> with the <see cref="Serialize(short)"/> method. The length of the array will also be serialized.
-        /// </summary>
-        public void Serialize(short[] v)
-        {
-            Serialize(v.Length);
-            for (int i = 0; i < v.Length; i++)
-            { Serialize(v[i]); }
-        }
-        /// <summary>
-        /// Serializes the given array of <see cref="int"/> with the <see cref="Serialize(int)"/> method. The length of the array will also be serialized.
-        /// </summary>
-        public void Serialize(int[] v)
-        {
-            Serialize(v.Length);
-            for (int i = 0; i < v.Length; i++)
-            { Serialize(v[i]); }
-        }
-        /// <summary>
-        /// Serializes the given array of <see cref="string"/> with the <see cref="Serialize(string)"/> method. The length of the array will also be serialized.
-        /// </summary>
-        public void Serialize(string[] v)
-        {
-            Serialize(v.Length);
-            for (int i = 0; i < v.Length; i++)
-            { Serialize(v[i]); }
-        }
-        /// <summary>
-        /// Serializes the given array of <see cref="char"/> with the <see cref="Serialize(char)"/> method. The length of the array will also be serialized.
-        /// </summary>
-        public void Serialize(char[] v)
-        {
-            Serialize(v.Length);
-            for (int i = 0; i < v.Length; i++)
-            { Serialize(v[i]); }
-        }
-        /// <summary>
         /// Serializes the given array of <typeparamref name="T"/> with the <see cref="SerializeObject{T}(ISerializable{T})"/> method. The length of the array will also be serialized.
         /// </summary>
-        public void SerializeObjectArray<T>(ISerializable<T>[] v)
+        public void SerializeObjects<T>(ISerializable<T>[] v)
         {
             Serialize(v.Length);
             for (int i = 0; i < v.Length; i++)
             { SerializeObject(v[i]); }
-        }
-        /// <summary>
-        /// Serializes the given array of <typeparamref name="T"/> with the <paramref name="callback"/> function. The length of the array will also be serialized.
-        /// </summary>
-        public void SerializeObjectArray<T>(T[] v, Action<Serializer, T> callback)
-        {
-            Serialize(v.Length);
-            for (int i = 0; i < v.Length; i++)
-            { callback.Invoke(this, v[i]); }
         }
         /// <summary>
         /// Serializes the given object <typeparamref name="T"/> with the <see cref="ISerializable{T}.Serialize(Serializer)"/> method.
@@ -387,103 +391,53 @@ namespace DataUtilities.Serializer
         /// <summary>
         /// Serializes the given object <typeparamref name="T"/> with the <paramref name="callback"/> function.
         /// </summary>
-        public void SerializeObject<T>(T v, Action<Serializer, T> callback) => callback.Invoke(this, v);
+        public void Serialize<T>(T v, Action<Serializer, T> callback) => callback.Invoke(this, v);
+        /// <summary>
+        /// Serializes the given array of <typeparamref name="T"/> with the <paramref name="callback"/> function. The length of the array will also be serialized.
+        /// </summary>
+        public void SerializeArray<T>(T[] v, Action<Serializer, T> callback)
+        {
+            Serialize(v.Length);
+            for (int i = 0; i < v.Length; i++)
+            { callback.Invoke(this, v[i]); }
+        }
         /// <summary>
         /// Serializes the given value.
-        /// Possible types:
-        /// <list type="bullet">
-        /// <item><seealso cref="int"/></item>
-        /// <item><seealso cref="short"/></item>
-        /// <item><seealso cref="char"/></item>
-        /// <item><seealso cref="string"/></item>
-        /// <item><seealso cref="bool"/></item>
-        /// <item><seealso cref="float"/></item>
-        /// <item><seealso cref="byte"/></item>
-        /// </list>
         /// </summary>
         /// <exception cref="NotImplementedException"></exception>
-        void Serialize(object v)
+        public void Serialize<T>(T v) => GetSerializerForType<T>().Invoke(v);
+        public void Serialize<T>(T[] v)
         {
-            if (v is short int16)
-            { Serialize(int16); }
-            else if (v is int int32)
-            { Serialize(int32); }
-            else if (v is char @char)
-            { Serialize(@char); }
-            else if (v is string @string)
-            { Serialize(@string); }
-            else if (v is float single)
-            { Serialize(single); }
-            else if (v is bool boolean)
-            { Serialize(boolean); }
-            else if (v is byte @byte)
-            { Serialize(@byte); }
-            else
-            { throw new NotImplementedException(); }
+            Action<T> method = GetSerializerForType<T>();
+            Serialize(v.Length);
+            for (int i = 0; i < v.Length; i++)
+            { method.Invoke(v[i]); }
         }
-        public void Serialize<TKey, TValue>(Dictionary<TKey, TValue> v, bool keyIsObj, bool valIsObj)
-            where TKey : struct, IConvertible
-            where TValue : struct, IConvertible
+        public void Serialize<T>(T[][] v)
+        {
+            Serialize(v.Length);
+            for (int i = 0; i < v.Length; i++)
+            { Serialize(v[i]); }
+        }
+        public void Serialize<T>(T[][][] v)
+        {
+            Serialize(v.Length);
+            for (int i = 0; i < v.Length; i++)
+            { Serialize(v[i]); }
+        }
+        public void Serialize<TKey, TValue>(Dictionary<TKey, TValue> v) where TKey : struct where TValue : struct
         {
             if (v.Count == 0) { Serialize(-1); return; }
+
+            Action<TKey> keySerializer = GetSerializerForType<TKey>();
+            Action<TValue> valueSerializer = GetSerializerForType<TValue>();
+
             Serialize(v.Count);
 
             foreach (var pair in v)
             {
-                if (keyIsObj)
-                {
-                    SerializeObject((ISerializable<TKey>)pair.Key);
-                }
-                else
-                {
-                    Serialize(pair.Key);
-                }
-                if (valIsObj)
-                {
-                    SerializeObject((ISerializable<TValue>)pair.Value);
-                }
-                else
-                {
-                    Serialize(pair.Value);
-                }
-            }
-        }
-        public void Serialize<TKey>(Dictionary<TKey, string> v, bool keyIsObj)
-            where TKey : struct, IConvertible
-        {
-            if (v.Count == 0) { Serialize(-1); return; }
-            Serialize(v.Count);
-
-            foreach (var pair in v)
-            {
-                if (keyIsObj)
-                {
-                    SerializeObject((ISerializable<TKey>)pair.Key);
-                }
-                else
-                {
-                    Serialize(pair.Key);
-                }
-                Serialize(pair.Value);
-            }
-        }
-        public void Serialize<TValue>(Dictionary<string, TValue> v, bool valIsObj)
-            where TValue : struct, IConvertible
-        {
-            if (v.Count == 0) { Serialize(-1); return; }
-            Serialize(v.Count);
-
-            foreach (var pair in v)
-            {
-                Serialize(pair.Key);
-                if (valIsObj)
-                {
-                    SerializeObject((ISerializable<TValue>)pair.Value);
-                }
-                else
-                {
-                    Serialize(pair.Value);
-                }
+                keySerializer.Invoke(pair.Key);
+                valueSerializer.Invoke(pair.Value);
             }
         }
     }
