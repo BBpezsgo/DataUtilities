@@ -12,7 +12,10 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Remove="obj\**" />
+    <EmbeddedResource Remove="obj\**" />
     <None Remove="**/*.meta" />
+    <None Remove="obj\**" />
   </ItemGroup>
 
   <ProjectExtensions><VisualStudio><UserProperties package_1json__JsonSchema="http://json.schemastore.org/package" /></VisualStudio></ProjectExtensions>
