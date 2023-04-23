@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+
 #if UNITY
 using Debug = UnityEngine.Debug;
 #endif
@@ -266,8 +267,8 @@ namespace DataUtilities.ReadableFileFormat
         /// <summary>
         /// Converts the node to its text equivalent. The result can be parsed back to <see cref="Value"/> with the <see cref="Parser"/>
         /// </summary>
-        public string ConvertToString(bool minimal = false) => ConvertToString(minimal, 0);
-        string ConvertToString(bool minimal, int indent)
+        public string ToSDF(bool minimal = false) => ToSDF(minimal, 0);
+        string ToSDF(bool minimal, int indent)
         {
             string result = "";
 
@@ -281,14 +282,77 @@ namespace DataUtilities.ReadableFileFormat
                 {
                     result += "{";
                     foreach (var pair in ObjectValue)
-                    { result += $"{pair.Key}:{pair.Value.ConvertToString(minimal, indent + 2)}"; }
+                    { result += $"{pair.Key}:{pair.Value.ToSDF(minimal, indent + 2)}"; }
                     result += "}";
                 }
                 else
                 {
                     result += "{\r\n";
                     foreach (var pair in ObjectValue)
-                    { result += "".PadLeft(indent + 2, ' ') + $"{pair.Key}: {pair.Value.ConvertToString(minimal, indent + 2)}\r\n"; }
+                    { result += "".PadLeft(indent + 2, ' ') + $"{pair.Key}: {pair.Value.ToSDF(minimal, indent + 2)}\r\n"; }
+                    result += "".PadLeft(indent, ' ') + "}";
+                }
+            }
+
+            return result;
+        }
+
+        /// <summary>
+        /// Converts the node to json. The result can be parsed back to <see cref="Value"/> with the <see cref="Json.Parser"/>
+        /// </summary>
+        public string ToJSON(bool minimal = false) => ToJSON(minimal, 0);
+        string ToJSON(bool minimal, int indent)
+        {
+            string result = "";
+
+            if (Type == ValueType.LITERAL)
+            {
+                if (Float.HasValue)
+                {
+                    result += $"{Float.Value.ToString(System.Globalization.CultureInfo.InvariantCulture)}";
+                }
+                else if (Int.HasValue)
+                {
+                    result += $"{Int.Value.ToString(System.Globalization.CultureInfo.InvariantCulture)}";
+                }
+                else if (Bool.HasValue)
+                {
+                    result += Bool.Value ? "true" : "false";
+                }
+                else
+                {
+                    result += $"\"{(LiteralValue ?? "").Replace("\\", "\\\\").Replace("\"", "\\\"")}\"";
+                }
+            }
+            else if (Type == ValueType.OBJECT)
+            {
+                bool commaAdded = false;
+                if (minimal)
+                {
+                    result += "{";
+                    foreach (var pair in ObjectValue)
+                    {
+                        result += $"{pair.Key}:{pair.Value.ToJSON(minimal, indent + 2)}";
+                        if (!commaAdded)
+                        {
+                            result += ',';
+                            commaAdded = true;
+                        }
+                    }
+                    result += "}";
+                }
+                else
+                {
+                    result += "{\r\n";
+                    foreach (var pair in ObjectValue)
+                    {
+                        result += "".PadLeft(indent + 2, ' ') + $"{pair.Key}: {pair.Value.ToJSON(minimal, indent + 2)}\r\n";
+                        if (!commaAdded)
+                        {
+                            result += ',';
+                            commaAdded = true;
+                        }
+                    }
                     result += "".PadLeft(indent, ' ') + "}";
                 }
             }
