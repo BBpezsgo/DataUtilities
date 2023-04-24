@@ -278,19 +278,40 @@ namespace DataUtilities.ReadableFileFormat
             }
             else if (Type == ValueType.OBJECT)
             {
-                if (minimal)
+                if (Array == null)
                 {
-                    result += "{";
-                    foreach (var pair in ObjectValue)
-                    { result += $"{pair.Key}:{pair.Value.ToSDF(minimal, indent + 2)}"; }
-                    result += "}";
+                    if (minimal)
+                    {
+                        result += "{";
+                        foreach (var pair in ObjectValue)
+                        { result += $"{pair.Key}:{pair.Value.ToSDF(minimal, indent + 2)}"; }
+                        result += "}";
+                    }
+                    else
+                    {
+                        result += "{\r\n";
+                        foreach (var pair in ObjectValue)
+                        { result += "".PadLeft(indent + 2, ' ') + $"{pair.Key}: {pair.Value.ToSDF(minimal, indent + 2)}\r\n"; }
+                        result += "".PadLeft(indent, ' ') + "}";
+                    }
                 }
                 else
                 {
-                    result += "{\r\n";
-                    foreach (var pair in ObjectValue)
-                    { result += "".PadLeft(indent + 2, ' ') + $"{pair.Key}: {pair.Value.ToSDF(minimal, indent + 2)}\r\n"; }
-                    result += "".PadLeft(indent, ' ') + "}";
+                    Value[] arrayValue = Array;
+                    if (minimal)
+                    {
+                        result += "[";
+                        foreach (var item in arrayValue)
+                        { result += $"{item.ToSDF(minimal, indent + 2)}"; }
+                        result += "]";
+                    }
+                    else
+                    {
+                        result += "[\r\n";
+                        foreach (var item in arrayValue)
+                        { result += "".PadLeft(indent + 2, ' ') + $"{item.ToSDF(minimal, indent + 2)}\r\n"; }
+                        result += "".PadLeft(indent, ' ') + "]";
+                    }
                 }
             }
 
@@ -326,38 +347,72 @@ namespace DataUtilities.ReadableFileFormat
             }
             else if (Type == ValueType.OBJECT)
             {
-                bool commaAdded = false;
-                if (minimal)
+                if (Array == null)
                 {
-                    result += "{";
-                    foreach (var pair in ObjectValue)
+                    if (minimal)
                     {
-                        result += $"{pair.Key}:{pair.Value.ToJSON(minimal, indent + 2)}";
-                        if (!commaAdded)
+                        result += "{";
+                        foreach (var pair in ObjectValue)
                         {
-                            result += ',';
-                            commaAdded = true;
+                            result += $"\"{pair.Key}\":{pair.Value.ToJSON(minimal, indent + 2)},";
                         }
+                        if (result.EndsWith(',')) result = result[..^1];
+                        result += "}";
                     }
-                    result += "}";
+                    else
+                    {
+                        result += "{\r\n";
+                        foreach (var pair in ObjectValue)
+                        {
+                            result += "".PadLeft(indent + 2, ' ') + $"\"{pair.Key}\": {pair.Value.ToJSON(minimal, indent + 2)},\r\n";
+                        }
+                        if (result.EndsWith(",\r\n")) result = result[..^3] + "\r\n";
+                        result += "".PadLeft(indent, ' ') + "}";
+                    }
                 }
                 else
                 {
-                    result += "{\r\n";
-                    foreach (var pair in ObjectValue)
+                    Value[] arrayValue = Array;
+                    if (minimal)
                     {
-                        result += "".PadLeft(indent + 2, ' ') + $"{pair.Key}: {pair.Value.ToJSON(minimal, indent + 2)}\r\n";
-                        if (!commaAdded)
+                        result += "[";
+                        foreach (var element in arrayValue)
                         {
-                            result += ',';
-                            commaAdded = true;
+                            result += $"{element.ToJSON(minimal, indent + 2)},";
                         }
+                        if (result.EndsWith(',')) result = result[..^1];
+                        result += "]";
                     }
-                    result += "".PadLeft(indent, ' ') + "}";
+                    else
+                    {
+                        result += "[\r\n";
+                        foreach (var element in arrayValue)
+                        {
+                            result += "".PadLeft(indent + 2, ' ') + $"{element.ToJSON(minimal, indent + 2)},\r\n";
+                        }
+                        if (result.EndsWith(",\r\n")) result = result[..^3] + "\r\n";
+                        result += "".PadLeft(indent, ' ') + "]";
+                    }
                 }
             }
 
             return result;
+        }
+
+        public override bool Equals(object obj)
+        {
+            if (obj is not Value other) return false;
+            return Equals(other);
+        }
+        public bool Equals(Value obj)
+        {
+            if (obj.Type != Type) return false;
+            return Type switch
+            {
+                ValueType.LITERAL or ValueType.REFERENCE => string.Equals(LiteralValue, obj.LiteralValue),
+                ValueType.OBJECT => ObjectValue.Equals(obj.ObjectValue),
+                _ => false,
+            };
         }
     }
 
@@ -592,10 +647,10 @@ namespace DataUtilities.ReadableFileFormat
 
         static readonly Dictionary<System.Type, System.Delegate> converters = new()
         {
-            { typeof(int), (System.Func<Value, int>) (v => v.Int ?? 0) },
-            { typeof(string), (System.Func<Value, string>) (v => v.String) },
-            { typeof(bool), (System.Func<Value, bool>) (v => v.Bool ?? false) },
-            { typeof(float), (System.Func<Value, float>) (v => v.Float ?? 0f) },
+            { typeof(int), (System.Func<Value, int>)(v => v.Int ?? 0) },
+            { typeof(string), (System.Func<Value, string>)(v => v.String) },
+            { typeof(bool), (System.Func<Value, bool>)(v => v.Bool ?? false) },
+            { typeof(float), (System.Func<Value, float>)(v => v.Float ?? 0f) },
         };
         public static T[] ConvertPrimitive<T>(this Value[] self)
         {
