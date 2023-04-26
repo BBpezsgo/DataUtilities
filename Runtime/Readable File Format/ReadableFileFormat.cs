@@ -158,7 +158,7 @@ namespace DataUtilities.ReadableFileFormat
         public static Value Object(ISerializableText[] value)
         {
             Value result = Object();
-            result["Length"] = Literal(value.Length.ToString());
+            result["Length"] = value.Length;
             for (int i = 0; i < value.Length; i++)
             { result[i] = Object(value[i]); }
             return result;
@@ -166,7 +166,7 @@ namespace DataUtilities.ReadableFileFormat
         public static Value Object<T>(T[] value, System.Func<T, Value> converter)
         {
             Value result = Object();
-            result["Length"] = Literal(value.Length.ToString());
+            result["Length"] = value.Length;
             for (int i = 0; i < value.Length; i++)
             { result[i] = converter.Invoke(value[i]); }
             return result;
@@ -174,17 +174,17 @@ namespace DataUtilities.ReadableFileFormat
         public static Value Object(string[] value)
         {
             Value result = Object();
-            result["Length"] = Literal(value.Length.ToString());
+            result["Length"] = value.Length;
             for (int i = 0; i < value.Length; i++)
-            { result[i] = Literal(value[i]); }
+            { result[i] = Value.Literal(value[i]); }
             return result;
         }
         public static Value Object(int[] value)
         {
             Value result = Object();
-            result["Length"] = Literal(value.Length.ToString());
+            result["Length"] = value.Length;
             for (int i = 0; i < value.Length; i++)
-            { result[i] = Literal(value[i]); }
+            { result[i] = value[i]; }
             return result;
         }
         public static Value Object(Dictionary<string, ISerializableText> value)
@@ -407,12 +407,41 @@ namespace DataUtilities.ReadableFileFormat
         public bool Equals(Value obj)
         {
             if (obj.Type != Type) return false;
-            return Type switch
+            switch (Type)
             {
-                ValueType.LITERAL or ValueType.REFERENCE => string.Equals(LiteralValue, obj.LiteralValue),
-                ValueType.OBJECT => ObjectValue.Equals(obj.ObjectValue),
-                _ => false,
+                case ValueType.LITERAL:
+                case ValueType.REFERENCE:
+                    {
+                        return string.Equals(LiteralValue, obj.LiteralValue);
+                    }
+                case ValueType.OBJECT:
+                    {
+                        foreach (var pair in ObjectValue)
+                        {
+                            if (!obj.ObjectValue.TryGetValue(pair.Key, out var objValue)) return false;
+                            if (!pair.Value.Equals(objValue)) return false;
+                        }
+                        foreach (var pair in obj.ObjectValue)
+                        {
+                            if (!ObjectValue.TryGetValue(pair.Key, out var objValue)) return false;
+                            if (!pair.Value.Equals(objValue)) return false;
+                        }
+                        return true;
+                    }
+                default: return false;
             };
+        }
+
+        public static implicit operator Value(bool v) => Value.Literal(v);
+        public static implicit operator Value(int v) => Value.Literal(v);
+        public static implicit operator Value(float v) => Value.Literal(v);
+        public static implicit operator Value(Value[] v)
+        {
+            Value result = Value.Object();
+            result["Length"] = v.Length;
+            for (int i = 0; i < v.Length; i++)
+            { result[i] = v[i]; }
+            return result;
         }
     }
 
