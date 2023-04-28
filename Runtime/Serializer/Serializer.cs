@@ -17,26 +17,31 @@ namespace DataUtilities.Serializer
 
         readonly Dictionary<Type, Delegate> typeSerializers;
 
+        delegate void TypeSerializer<T>(T v);
+        static KeyValuePair<Type, Delegate> GenerateTypeSerializer<T>(TypeSerializer<T> typeSerializer) => new(typeof(T), typeSerializer);
+
         public Serializer()
         {
-            typeSerializers = new Dictionary<Type, Delegate>()
+            typeSerializers = (new KeyValuePair<Type, Delegate>[]
             {
-                { typeof(int), new Action<int>(v => Serialize(v)) },
-                { typeof(float), new Action<float>(v => Serialize(v)) },
-                { typeof(bool), new Action<bool>(v => Serialize(v)) },
-                { typeof(byte), new Action<byte>(v => Serialize(v)) },
-                { typeof(short), new Action<short>(v => Serialize(v)) },
-                { typeof(char), new Action<char>(v => Serialize(v)) },
-                { typeof(string), new Action<string>(v => Serialize(v)) },
-                { typeof(double), new Action<double>(v => Serialize(v)) },
-            };
+                GenerateTypeSerializer<int>(Serialize),
+                GenerateTypeSerializer<int>(Serialize),
+                GenerateTypeSerializer<float>(Serialize),
+                GenerateTypeSerializer<bool>(Serialize),
+                GenerateTypeSerializer<byte>(Serialize),
+                GenerateTypeSerializer<short>(Serialize),
+                GenerateTypeSerializer<char>(Serialize),
+                GenerateTypeSerializer<string>(Serialize),
+                GenerateTypeSerializer<double>(Serialize),
+                GenerateTypeSerializer<ReadableFileFormat.Value>(Serialize),
+            }).ToDictionary();
         }
 
-        Action<T> GetSerializerForType<T>()
+        TypeSerializer<T> GetSerializerForType<T>()
         {
             if (!typeSerializers.TryGetValue(typeof(T), out Delegate method))
             { throw new NotImplementedException($"Serializer for type {typeof(T)} not found"); }
-            return (Action<T>)method;
+            return (TypeSerializer<T>)method;
         }
 
         /// <summary>
@@ -97,6 +102,21 @@ namespace DataUtilities.Serializer
             var result = BitConverter.GetBytes(v);
             if (BitConverter.IsLittleEndian) Array.Reverse(result);
             this.result.AddRange(result);
+        }
+        public void Serialize(ReadableFileFormat.Value v)
+        {
+            Serialize((int)v.Type);
+            switch (v.Type)
+            {
+                case ReadableFileFormat.ValueType.LITERAL:
+                    Serialize(v.String);
+                    break;
+                case ReadableFileFormat.ValueType.OBJECT:
+                    Serialize(v.Dictionary());
+                    break;
+                default:
+                    break;
+            }
         }
         /// <summary>
         /// Serializes the given <see cref="string"/>. Both the length and the encoding will be serialized.
@@ -163,7 +183,7 @@ namespace DataUtilities.Serializer
         public void Serialize<T>(T v) => GetSerializerForType<T>().Invoke(v);
         public void Serialize<T>(T[] v)
         {
-            Action<T> method = GetSerializerForType<T>();
+            TypeSerializer<T> method = GetSerializerForType<T>();
             Serialize(v.Length);
             for (int i = 0; i < v.Length; i++)
             { method.Invoke(v[i]); }
@@ -180,12 +200,12 @@ namespace DataUtilities.Serializer
             for (int i = 0; i < v.Length; i++)
             { Serialize(v[i]); }
         }
-        public void Serialize<TKey, TValue>(Dictionary<TKey, TValue> v) where TKey : struct where TValue : struct
+        public void Serialize<TKey, TValue>(Dictionary<TKey, TValue> v)
         {
             if (v.Count == 0) { Serialize(-1); return; }
 
-            Action<TKey> keySerializer = GetSerializerForType<TKey>();
-            Action<TValue> valueSerializer = GetSerializerForType<TValue>();
+            TypeSerializer<TKey> keySerializer = GetSerializerForType<TKey>();
+            TypeSerializer<TValue> valueSerializer = GetSerializerForType<TValue>();
 
             Serialize(v.Count);
 
@@ -193,6 +213,20 @@ namespace DataUtilities.Serializer
             {
                 keySerializer.Invoke(pair.Key);
                 valueSerializer.Invoke(pair.Value);
+            }
+        }
+        public void Serialize<TKey, TValue>(Dictionary<TKey, TValue> v, Action<Serializer, TValue> valueSerializer) where TKey : struct
+        {
+            if (v.Count == 0) { Serialize(-1); return; }
+
+            TypeSerializer<TKey> keySerializer = GetSerializerForType<TKey>();
+
+            Serialize(v.Count);
+
+            foreach (var pair in v)
+            {
+                keySerializer.Invoke(pair.Key);
+                valueSerializer.Invoke(this, pair.Value);
             }
         }
     }

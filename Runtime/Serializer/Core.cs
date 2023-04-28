@@ -1,6 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
+﻿using System.Collections.Generic;
+using System.Linq;
 
 namespace DataUtilities.Serializer
 {
@@ -20,6 +19,8 @@ namespace DataUtilities.Serializer
             { result.Add(array[i]); }
             return result.ToArray();
         }
+
+        internal static Dictionary<TKey, TValue> ToDictionary<TKey, TValue>(this IEnumerable<KeyValuePair<TKey, TValue>> v) => v.ToDictionary(x => x.Key, x => x.Value);
     }
 
     /// <summary>

@@ -14,7 +14,6 @@ namespace DataUtilities.ReadableFileFormat
         /// A simple data type like <see cref="string"/>, <see cref="int"/>, <see cref="float"/> and <see cref="bool"/>.
         /// </summary>
         LITERAL,
-        REFERENCE,
         /// <summary>
         /// A complex data type with child fields.
         /// </summary>
@@ -154,6 +153,8 @@ namespace DataUtilities.ReadableFileFormat
         /// </summary>
         public static Value Object() => new()
         { Type = ValueType.OBJECT, ObjectValue = new Dictionary<string, Value>(), LiteralValue = null, };
+        public static Value Object(Dictionary<string, Value> v) => new()
+        { Type = ValueType.OBJECT, ObjectValue = v, LiteralValue = null, };
         public static Value Object(ISerializableText value) => value.SerializeText();
         public static Value Object(ISerializableText[] value)
         {
@@ -233,17 +234,8 @@ namespace DataUtilities.ReadableFileFormat
         {
             ValueType.OBJECT => "{ . }",
             ValueType.LITERAL => LiteralValue,
-            ValueType.REFERENCE => LiteralValue,
             _ => ToString(),
         };
-
-        public Value SetReference(string referenceName)
-        {
-            this.Type = ValueType.REFERENCE;
-            this.LiteralValue = referenceName;
-            return this;
-        }
-        public Value SetReference() => this.SetReference(this.LiteralValue);
 
         public T Reference<T>(Dictionary<string, T> map)
         {
@@ -410,7 +402,6 @@ namespace DataUtilities.ReadableFileFormat
             switch (Type)
             {
                 case ValueType.LITERAL:
-                case ValueType.REFERENCE:
                     {
                         return string.Equals(LiteralValue, obj.LiteralValue);
                     }
@@ -442,6 +433,83 @@ namespace DataUtilities.ReadableFileFormat
             for (int i = 0; i < v.Length; i++)
             { result[i] = v[i]; }
             return result;
+        }
+
+        [System.Flags]
+        public enum CombineOptions : ushort
+        {
+            OVERRIDE_LITERAL_WITH_OBJECT,
+            OVERRIDE_LITERAL_WITH_LITERAL,
+            OVERRIDE_OBJECT_WITH_LITERAL,
+        }
+
+        public const CombineOptions DefaultCombineOptions =
+            CombineOptions.OVERRIDE_LITERAL_WITH_LITERAL;
+
+        /// <summary>
+        /// Combines <paramref name="other"/> with <see langword="this"/>.<br/>
+        /// <b><see langword="this"/> will be the base object!</b>
+        /// </summary>
+        public void Combine(Value other, CombineOptions flags = DefaultCombineOptions)
+        {
+            if (this.Type == ValueType.LITERAL)
+            {
+                if (other.Type == ValueType.LITERAL)
+                {
+                    if ((flags & CombineOptions.OVERRIDE_LITERAL_WITH_LITERAL) != 0)
+                    {
+                        this.LiteralValue = other.LiteralValue;
+                    }
+                }
+                else if (other.Type == ValueType.OBJECT)
+                {
+                    if ((flags & CombineOptions.OVERRIDE_LITERAL_WITH_OBJECT) != 0)
+                    {
+                        this.Type = ValueType.OBJECT;
+                        this.LiteralValue = null;
+                        this.ObjectValue = other.ObjectValue;
+                    }
+                }
+                else throw new System.NotImplementedException();
+            }
+            else if (this.Type == ValueType.OBJECT)
+            {
+                if (other.Type == ValueType.LITERAL)
+                {
+                    if ((flags & CombineOptions.OVERRIDE_OBJECT_WITH_LITERAL) != 0)
+                    {
+                        this.Type = ValueType.LITERAL;
+                        this.LiteralValue = other.LiteralValue;
+                        this.ObjectValue = null;
+                    }
+                }
+                else if (other.Type == ValueType.OBJECT)
+                {
+                    Value.Combine(this.ObjectValue, other.ObjectValue, flags);
+                }
+                else throw new System.NotImplementedException();
+            }
+            else throw new System.NotImplementedException();
+        }
+
+        /// <summary>
+        /// Combines <paramref name="b"/> with <paramref name="a"/>.<br/>
+        /// <b><paramref name="a"/> will be the base object!</b>
+        /// </summary>
+        public static void Combine(Dictionary<string, Value> a, Dictionary<string, Value> b, CombineOptions flags = DefaultCombineOptions)
+        {
+            foreach (KeyValuePair<string, Value> pair in b)
+            {
+                if (a.TryGetValue(pair.Key, out Value @this))
+                {
+                    @this.Combine(pair.Value, flags);
+                    a[pair.Key] = @this;
+                }
+                else
+                {
+                    a.Add(pair.Key, pair.Value);
+                }
+            }
         }
     }
 
@@ -551,14 +619,6 @@ namespace DataUtilities.ReadableFileFormat
                 return objectValue;
             }
 
-            bool isReference = false;
-            if (CurrentCharacter == '&')
-            {
-                ConsumeNext();
-                ConsumeCharacters(WhitespaceCharacters);
-                isReference = true;
-            }
-
             if (CurrentCharacter == '"')
             {
                 ConsumeNext();
@@ -573,12 +633,10 @@ namespace DataUtilities.ReadableFileFormat
                     literalValue += ConsumeNext();
                 }
                 ConsumeNext();
-                if (isReference) return Value.Literal(literalValue).SetReference();
                 return Value.Literal(literalValue);
             }
 
             var anyValue = ConsumeUntil('{', '\r', '\n', ' ', '\t', '\0', ',');
-            if (isReference) return Value.Literal(anyValue).SetReference();
             return Value.Literal(anyValue);
         }
 

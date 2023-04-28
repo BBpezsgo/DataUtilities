@@ -15,22 +15,27 @@ namespace DataUtilities.Serializer
 
         readonly Dictionary<Type, Delegate> typeDeserializers;
 
+        delegate T TypeDeserializer<T>();
+        static KeyValuePair<Type, Delegate> GenerateTypeDeserializer<T>(TypeDeserializer<T> typeSerializer) => new(typeof(T), typeSerializer);
+
         /// <param name="data">The raw binary data you want to deserialize</param>
         public Deserializer(byte[] data)
         {
             this.data = data;
-            currentIndex = 0;
+            this.currentIndex = 0;
 
-            typeDeserializers = new Dictionary<Type, Delegate>()
+            typeDeserializers = (new KeyValuePair<Type, Delegate>[]
             {
-                { typeof(int), new Func<int>(DeserializeInt32) },
-                { typeof(float), new Func<float>(DeserializeFloat) },
-                { typeof(bool), new Func<bool>(DeserializeBoolean) },
-                { typeof(byte), new Func<byte>(DeserializeByte) },
-                { typeof(char), new Func<char>(DeserializeChar) },
-                { typeof(string), new Func<string>(DeserializeString) },
-                { typeof(double), new Func<double>(DeserializeDouble) },
-            };
+                GenerateTypeDeserializer(DeserializeInt32),
+                GenerateTypeDeserializer(DeserializeFloat),
+                GenerateTypeDeserializer(DeserializeBoolean),
+                GenerateTypeDeserializer(DeserializeByte),
+                GenerateTypeDeserializer(DeserializeChar),
+                GenerateTypeDeserializer(DeserializeString),
+                GenerateTypeDeserializer(DeserializeDouble),
+                GenerateTypeDeserializer(DeserializeSdfValue),
+                GenerateTypeDeserializer(DeserializeInt16),
+            }).ToDictionary();
         }
 
         Func<T> GetDeserializerForType<T>()
@@ -188,6 +193,16 @@ namespace DataUtilities.Serializer
 
                 default: throw new Exception($"Unknown encoding index {type}");
             }
+        }
+        public ReadableFileFormat.Value DeserializeSdfValue()
+        {
+            ReadableFileFormat.ValueType type = (ReadableFileFormat.ValueType)DeserializeInt32();
+            return type switch
+            {
+                ReadableFileFormat.ValueType.LITERAL => ReadableFileFormat.Value.Literal(DeserializeString()),
+                ReadableFileFormat.ValueType.OBJECT => ReadableFileFormat.Value.Object(DeserializeDictionary<string, ReadableFileFormat.Value>()),
+                _ => throw new Exception("WTF"),
+            };
         }
         /// <summary>
         /// Deserializes the following <typeparamref name="T"/> data.<br/>
