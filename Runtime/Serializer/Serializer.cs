@@ -37,13 +37,13 @@ namespace DataUtilities.Serializer
             }).ToDictionary();
         }
 
+        /// <exception cref="NotImplementedException"></exception>
         TypeSerializer<T> GetSerializerForType<T>()
         {
             if (!typeSerializers.TryGetValue(typeof(T), out Delegate method))
             { throw new NotImplementedException($"Serializer for type {typeof(T)} not found"); }
             return (TypeSerializer<T>)method;
         }
-
         /// <summary>
         /// Serializes the given <see cref="int"/>
         /// </summary>
@@ -181,25 +181,48 @@ namespace DataUtilities.Serializer
         /// </summary>
         /// <exception cref="NotImplementedException"></exception>
         public void Serialize<T>(T v) => GetSerializerForType<T>().Invoke(v);
-        public void Serialize<T>(T[] v)
+        /// <exception cref="TooSmallUnitException"></exception>
+        public void Serialize<T>(T[] v, INTEGER_TYPE length = INTEGER_TYPE.INT32)
         {
             TypeSerializer<T> method = GetSerializerForType<T>();
-            Serialize(v.Length);
+            SerializeArrayLength(length, v.Length);
             for (int i = 0; i < v.Length; i++)
             { method.Invoke(v[i]); }
         }
-        public void Serialize<T>(T[][] v)
+        /// <exception cref="TooSmallUnitException"></exception>
+        public void Serialize<T>(T[][] v, INTEGER_TYPE length = INTEGER_TYPE.INT32)
         {
-            Serialize(v.Length);
+            SerializeArrayLength(length, v.Length);
             for (int i = 0; i < v.Length; i++)
-            { Serialize(v[i]); }
+            { Serialize(v[i], length); }
         }
-        public void Serialize<T>(T[][][] v)
+        /// <exception cref="TooSmallUnitException"></exception>
+        public void Serialize<T>(T[][][] v, INTEGER_TYPE length = INTEGER_TYPE.INT32)
         {
-            Serialize(v.Length);
+            SerializeArrayLength(length, v.Length);
             for (int i = 0; i < v.Length; i++)
-            { Serialize(v[i]); }
+            { Serialize(v[i], length); }
         }
+        /// <exception cref="TooSmallUnitException"></exception>
+        void SerializeArrayLength(INTEGER_TYPE type, int length)
+        {
+            switch (type)
+            {
+                case INTEGER_TYPE.INT8:
+                    if (length < byte.MinValue || length > byte.MaxValue) throw new TooSmallUnitException($"The specified array length unit {type} is too small for the value {length}");
+                    Serialize((byte)length);
+                    break;
+                case INTEGER_TYPE.INT16:
+                    if (length < short.MinValue || length > short.MaxValue) throw new TooSmallUnitException($"The specified array length unit {type} is too small for the value {length}");
+                    Serialize((short)length);
+                    break;
+                case INTEGER_TYPE.INT32:
+                default:
+                    Serialize(length);
+                    break;
+            }
+        }
+        /// <exception cref="NotImplementedException"></exception>
         public void Serialize<TKey, TValue>(Dictionary<TKey, TValue> v)
         {
             if (v.Count == 0) { Serialize(-1); return; }
@@ -215,6 +238,7 @@ namespace DataUtilities.Serializer
                 valueSerializer.Invoke(pair.Value);
             }
         }
+        /// <exception cref="NotImplementedException"></exception>
         public void Serialize<TKey, TValue>(Dictionary<TKey, TValue> v, Action<Serializer, TValue> valueSerializer) where TKey : struct
         {
             if (v.Count == 0) { Serialize(-1); return; }

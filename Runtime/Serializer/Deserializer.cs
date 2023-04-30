@@ -45,23 +45,37 @@ namespace DataUtilities.Serializer
             return (Func<T>)method;
         }
 
-        public T[] DeserializeArray<T>()
+        int DeserializeArrayLength(INTEGER_TYPE length)
         {
-            int length = DeserializeInt32();
-            T[] result = new T[length];
-            for (int i = 0; i < length; i++)
+            switch (length)
+            {
+                case INTEGER_TYPE.INT8:
+                    return (int)DeserializeByte();
+                case INTEGER_TYPE.INT16:
+                    return (int)DeserializeInt16();
+                case INTEGER_TYPE.INT32:
+                default:
+                    return (int)DeserializeInt32();
+            }
+        }
+
+        public T[] DeserializeArray<T>(INTEGER_TYPE length = INTEGER_TYPE.INT32)
+        {
+            int _length = DeserializeArrayLength(length);
+            T[] result = new T[_length];
+            for (int i = 0; i < _length; i++)
             {
                 result[i] = (T)Deserialize<T>();
             }
             return result;
         }
-        public T[][] DeserializeArray2D<T>()
+        public T[][] DeserializeArray2D<T>(INTEGER_TYPE length = INTEGER_TYPE.INT32)
         {
-            int length = DeserializeInt32();
-            T[][] result = new T[length][];
-            for (int i = 0; i < length; i++)
+            int _length = DeserializeArrayLength(length);
+            T[][] result = new T[_length][];
+            for (int i = 0; i < _length; i++)
             {
-                result[i] = DeserializeArray<T>();
+                result[i] = DeserializeArray<T>(length);
             }
             return result;
         }
