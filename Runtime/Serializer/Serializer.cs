@@ -25,7 +25,6 @@ namespace DataUtilities.Serializer
             typeSerializers = (new KeyValuePair<Type, Delegate>[]
             {
                 GenerateTypeSerializer<int>(Serialize),
-                GenerateTypeSerializer<int>(Serialize),
                 GenerateTypeSerializer<float>(Serialize),
                 GenerateTypeSerializer<bool>(Serialize),
                 GenerateTypeSerializer<byte>(Serialize),
