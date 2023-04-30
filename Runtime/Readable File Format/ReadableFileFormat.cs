@@ -230,6 +230,13 @@ namespace DataUtilities.ReadableFileFormat
         public static Value Literal(int value) => new()
         { Type = ValueType.LITERAL, ObjectValue = null, LiteralValue = value.ToString(), };
 
+        public bool RemoveNode(string name)
+        {
+            if (Type != ValueType.OBJECT) return false;
+            if (ObjectValue == null) return false;
+            return ObjectValue.Remove(name);
+        }
+
         string GetDebuggerDisplay() => Type switch
         {
             ValueType.OBJECT => "{ . }",
@@ -511,6 +518,32 @@ namespace DataUtilities.ReadableFileFormat
                 }
             }
         }
+
+        public Location Location
+        {
+            get => _location;
+            internal set => _location = value;
+        }
+        Location _location;
+    }
+
+    public struct Location
+    {
+        internal uint Character;
+        internal uint Column;
+        internal uint Line;
+        bool _isNull;
+        internal bool IsNull => _isNull;
+
+        public Location(uint character, uint column, uint line)
+        {
+            Character = character;
+            Column = column;
+            Line = line;
+            _isNull = false;
+        }
+
+        public override string ToString() => IsNull ? "" : $"{Line+1}:{Column+1}";
     }
 
     /// <summary>
@@ -524,9 +557,15 @@ namespace DataUtilities.ReadableFileFormat
 
         char CurrentCharacter => Content.Length == 0 ? '\0' : Content[0];
 
+        uint CurrentCharacterIndex = 0;
+        uint CurrentColumn = 0;
+        uint CurrentLine = 0;
+        Location CurrentLocation => new(CurrentCharacterIndex, CurrentColumn, CurrentLine);
+
         static readonly char[] SpaceCharacters = new char[] { ' ', '\t' };
         static readonly char[] LinebrakCharacters = new char[] { '\r', '\n' };
         static readonly char[] WhitespaceCharacters = new char[] { ' ', '\t', '\r', '\n' };
+        static readonly char EOL = '\n';
 
         public static Value Parse(string data) => new Parser(data)._Parse();
 
@@ -539,6 +578,7 @@ namespace DataUtilities.ReadableFileFormat
             ConsumeCharacters(WhitespaceCharacters);
 
             Value root = Value.Object();
+            root.Location = CurrentLocation;
 
             bool inParentecieses = CurrentCharacter == '{';
             if (inParentecieses)
@@ -572,11 +612,13 @@ namespace DataUtilities.ReadableFileFormat
         Value ExpectValue()
         {
             ConsumeCharacters(WhitespaceCharacters);
+            var loc = CurrentLocation;
             if (CurrentCharacter == '{')
             {
                 ConsumeNext();
                 ConsumeCharacters(WhitespaceCharacters);
                 Value objectValue = Value.Object();
+                objectValue.Location = loc;
                 int endlessSafe = INFINITY;
                 while (CurrentCharacter != '}')
                 {
@@ -600,6 +642,7 @@ namespace DataUtilities.ReadableFileFormat
                 ConsumeNext();
                 ConsumeCharacters(WhitespaceCharacters);
                 Value objectValue = Value.Object();
+                objectValue.Location = loc;
                 int endlessSafe = INFINITY;
                 int index = 0;
                 while (CurrentCharacter != ']')
@@ -633,11 +676,17 @@ namespace DataUtilities.ReadableFileFormat
                     literalValue += ConsumeNext();
                 }
                 ConsumeNext();
-                return Value.Literal(literalValue);
+                var result = Value.Literal(literalValue);
+                result.Location = loc;
+                return result;
             }
 
-            var anyValue = ConsumeUntil('{', '\r', '\n', ' ', '\t', '\0', ',');
-            return Value.Literal(anyValue);
+            {
+                var anyValue = ConsumeUntil('{', '\r', '\n', ' ', '\t', '\0', ',');
+                var result = Value.Literal(anyValue);
+                result.Location = loc;
+                return result;
+            }
         }
 
         string ExpectPropertyName()
@@ -661,6 +710,15 @@ namespace DataUtilities.ReadableFileFormat
         {
             char substring = Content[0];
             Content = Content[1..];
+
+            CurrentCharacterIndex++;
+            CurrentColumn++;
+            if (substring == EOL)
+            {
+                CurrentLine++;
+                CurrentColumn = 0;
+            }
+
             return substring;
         }
 
@@ -683,6 +741,18 @@ namespace DataUtilities.ReadableFileFormat
             if (until <= 0) return "";
             string substring = Content[..until];
             Content = Content[(until + 1)..];
+
+            CurrentCharacterIndex += (uint)substring.Length;
+            CurrentColumn++;
+            for (int i = 0; i < substring.Length; i++)
+            {
+                if (substring[i] == EOL)
+                {
+                    CurrentLine += (uint)substring.Length;
+                    CurrentColumn = 0;
+                }
+            }
+
             return substring;
         }
 
