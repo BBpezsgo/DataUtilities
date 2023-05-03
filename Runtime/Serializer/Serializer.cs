@@ -238,7 +238,7 @@ namespace DataUtilities.Serializer
             }
         }
         /// <exception cref="NotImplementedException"></exception>
-        public void Serialize<TKey, TValue>(Dictionary<TKey, TValue> v, Action<Serializer, TValue> valueSerializer) where TKey : struct
+        public void Serialize<TKey, TValue>(Dictionary<TKey, TValue> v, Action<Serializer, TValue> valueSerializer)
         {
             if (v.Count == 0) { Serialize(-1); return; }
 

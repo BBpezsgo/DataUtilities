@@ -21,7 +21,9 @@ namespace DataUtilities.ReadableFileFormat
     }
 
     [System.Diagnostics.DebuggerDisplay("{" + nameof(GetDebuggerDisplay) + "(),nq}")]
+#pragma warning disable CS0659
     public struct Value
+#pragma warning restore CS0659
     {
         /// <summary>
         /// The type of this node.
@@ -524,6 +526,16 @@ namespace DataUtilities.ReadableFileFormat
             get => _location;
             internal set => _location = value;
         }
+        public IReadOnlyCollection<string> ChildNames
+        {
+            get
+            {
+                if (this.Type != ValueType.OBJECT) return new string[0];
+                if (ObjectValue == null) return new string[0];
+                return ObjectValue.Keys;
+            }
+        }
+
         Location _location;
     }
 
@@ -543,7 +555,7 @@ namespace DataUtilities.ReadableFileFormat
             _isNull = false;
         }
 
-        public override string ToString() => IsNull ? "" : $"{Line+1}:{Column+1}";
+        public override string ToString() => IsNull ? "" : $"{Line + 1}:{Column + 1}";
     }
 
     /// <summary>
