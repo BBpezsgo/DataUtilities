@@ -44,9 +44,8 @@ namespace DataUtilities.ReadableFileFormat
         {
             get
             {
-                var stringValue = String;
-                if (stringValue == null) return null;
-                if (!float.TryParse(stringValue, System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out float result)) return null;
+                if (LiteralValue == null) return null;
+                if (!float.TryParse(LiteralValue, System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out float result)) return null;
                 return result;
             }
         }
@@ -57,9 +56,8 @@ namespace DataUtilities.ReadableFileFormat
         {
             get
             {
-                var stringValue = String;
-                if (stringValue == null) return null;
-                if (!int.TryParse(stringValue, out int result)) return null;
+                if (LiteralValue == null) return null;
+                if (!int.TryParse(LiteralValue, out int result)) return null;
                 return result;
             }
         }
@@ -77,9 +75,8 @@ namespace DataUtilities.ReadableFileFormat
         {
             get
             {
-                var stringValue = String;
-                if (stringValue == null) return null;
-                stringValue = stringValue.Trim().ToLower();
+                if (LiteralValue == null) return null;
+                string stringValue = LiteralValue.Trim().ToLower();
 
                 if (stringValue == "true") return true;
                 if (stringValue == "false") return false;
@@ -248,9 +245,9 @@ namespace DataUtilities.ReadableFileFormat
 
         public T Reference<T>(Dictionary<string, T> map)
         {
-            if (String == null) return default;
-            if (map.ContainsKey(String)) return map[String];
-            Debug.LogWarning($"Reference \"{String}\" not found");
+            if (LiteralValue == null) return default;
+            if (map.ContainsKey(LiteralValue)) return map[LiteralValue];
+            Debug.LogWarning($"Reference \"{LiteralValue}\" not found");
             return default;
         }
 
@@ -539,12 +536,12 @@ namespace DataUtilities.ReadableFileFormat
         Location _location;
     }
 
-    public struct Location
+    public readonly struct Location
     {
-        internal uint Character;
-        internal uint Column;
-        internal uint Line;
-        bool _isNull;
+        internal readonly uint Character;
+        internal readonly uint Column;
+        internal readonly uint Line;
+        readonly bool _isNull;
         internal bool IsNull => _isNull;
 
         public Location(uint character, uint column, uint line)
