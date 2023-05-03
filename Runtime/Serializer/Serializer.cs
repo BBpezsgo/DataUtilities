@@ -127,7 +127,7 @@ namespace DataUtilities.Serializer
                 Serialize(-1);
                 return;
             }
-            Serialize(v.Length);
+            SerializeArrayLength(INTEGER_TYPE.INT32, v.Length);
             bool isUnicode = false;
             for (int i = 0; i < v.Length; i++)
             {
@@ -154,7 +154,7 @@ namespace DataUtilities.Serializer
         /// </summary>
         public void SerializeObjects<T>(ISerializable<T>[] v)
         {
-            Serialize(v.Length);
+            SerializeArrayLength(INTEGER_TYPE.INT32, v.Length);
             for (int i = 0; i < v.Length; i++)
             { SerializeObject(v[i]); }
         }
@@ -171,7 +171,7 @@ namespace DataUtilities.Serializer
         /// </summary>
         public void SerializeArray<T>(T[] v, Action<Serializer, T> callback)
         {
-            Serialize(v.Length);
+            SerializeArrayLength(INTEGER_TYPE.INT32, v.Length);
             for (int i = 0; i < v.Length; i++)
             { callback.Invoke(this, v[i]); }
         }
@@ -229,7 +229,7 @@ namespace DataUtilities.Serializer
             TypeSerializer<TKey> keySerializer = GetSerializerForType<TKey>();
             TypeSerializer<TValue> valueSerializer = GetSerializerForType<TValue>();
 
-            Serialize(v.Count);
+            SerializeArrayLength(INTEGER_TYPE.INT32, v.Count);
 
             foreach (var pair in v)
             {
@@ -244,7 +244,7 @@ namespace DataUtilities.Serializer
 
             TypeSerializer<TKey> keySerializer = GetSerializerForType<TKey>();
 
-            Serialize(v.Count);
+            SerializeArrayLength(INTEGER_TYPE.INT32, v.Count);
 
             foreach (var pair in v)
             {
