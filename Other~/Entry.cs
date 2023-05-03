@@ -27,7 +27,7 @@ namespace DataUtilities
                     }
                 }
 
-                yeah.Serialize(matrix);
+                yeah.Serialize<int>(matrix);
 
                 yeah.Serialize(new Dictionary<double, int>
                 {
@@ -76,12 +76,20 @@ namespace DataUtilities
                 System.IO.File.WriteAllText("./yeah.sdf", yeah.ToSDF(true));
                 System.IO.File.WriteAllText("./yeah.json", yeah.ToJSON(true));
 
+                Serializer.Serializer serializer = new();
+                serializer.Serialize(yeah);
+                System.IO.File.WriteAllBytes("./yeah_sdf.bin", serializer.Result);
+
+                Serializer.Deserializer deserializer = new(System.IO.File.ReadAllBytes("./yeah_sdf.bin"));
+                Value yeahBinLoaded = deserializer.DeserializeSdfValue();
+
                 Value yeahLoaded = Parser.LoadFile("./yeah.sdf").Value;
 
                 Console.WriteLine(yeah.ToSDF());
                 Console.WriteLine(yeahLoaded.ToSDF());
 
                 Console.WriteLine(yeah.Equals(yeahLoaded));
+                Console.WriteLine(yeah.Equals(yeahBinLoaded));
             }
         }
     }
