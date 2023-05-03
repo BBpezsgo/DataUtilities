@@ -42,7 +42,7 @@ namespace DataUtilities.Serializer
         {
             if (!typeDeserializers.TryGetValue(typeof(T), out Delegate method))
             { throw new NotImplementedException($"Deserializer for type {typeof(T)} not found"); }
-            return (Func<T>)method;
+            return ((TypeDeserializer<T>)method).Invoke;
         }
 
         int DeserializeArrayLength(INTEGER_TYPE length)
