@@ -578,7 +578,7 @@ namespace DataUtilities.ReadableFileFormat
 
         public static Value Parse(string data) => new Parser(data)._Parse();
 
-        Parser(string data) => Content = data;
+        Parser(string data) => Content = data + ' ';
 
 #pragma warning disable IDE1006 // Naming Styles
         Value _Parse()
@@ -607,6 +607,7 @@ namespace DataUtilities.ReadableFileFormat
                 ConsumeCharacters(WhitespaceCharacters);
                 Value propertyValue = ExpectValue();
                 root[propertyName] = propertyValue;
+                ConsumeCharacters(WhitespaceCharacters);
 
                 if (inParentecieses && CurrentCharacter == '}')
                 {
@@ -691,7 +692,7 @@ namespace DataUtilities.ReadableFileFormat
             }
 
             {
-                var anyValue = ConsumeUntil('{', '\r', '\n', ' ', '\t', '\0', ',');
+                var anyValue = ConsumeUntil('{', '\r', '\n', ' ', '\t', '\0');
                 var result = Value.Literal(anyValue);
                 result.Location = loc;
                 return result;
@@ -701,7 +702,9 @@ namespace DataUtilities.ReadableFileFormat
         string ExpectPropertyName()
         {
             ConsumeCharacters(WhitespaceCharacters);
-            return ConsumeUntil(":");
+            var result = ConsumeUntil(":");
+            ConsumeNext();
+            return result;
         }
 
         void ConsumeCharacters(params char[] chars)
@@ -749,7 +752,7 @@ namespace DataUtilities.ReadableFileFormat
         {
             if (until <= 0) return "";
             string substring = Content[..until];
-            Content = Content[(until + 1)..];
+            Content = Content[(until)..];
 
             CurrentCharacterIndex += (uint)substring.Length;
             CurrentColumn++;
@@ -785,19 +788,19 @@ namespace DataUtilities.ReadableFileFormat
     {
         Value SerializeText();
     }
-    public interface IDeserializableText<T>
+    public interface IDeserializableText
     {
         void DeserializeText(Value data);
     }
 
     public static class Extensions
     {
-        public static T[] Convert<T>(this Value[] self) where T : IDeserializableText<T>
+        public static T[] Convert<T>(this Value[] self) where T : IDeserializableText
         {
             T[] result = new T[self.Length];
             for (int i = 0; i < result.Length; i++)
             {
-                IDeserializableText<T> instance = (IDeserializableText<T>)System.Activator.CreateInstance(typeof(T));
+                IDeserializableText instance = (IDeserializableText)System.Activator.CreateInstance(typeof(T));
                 instance.DeserializeText(self[i]);
                 result[i] = (T)instance;
             }
