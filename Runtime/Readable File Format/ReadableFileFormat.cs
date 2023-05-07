@@ -107,6 +107,27 @@ namespace DataUtilities.ReadableFileFormat
             }
         }
 
+        public bool IsNull
+        {
+            get
+            {
+                if (Type == ValueType.LITERAL) return LiteralValue == null;
+                if (Type == ValueType.OBJECT) return ObjectValue == null;
+                return true;
+            }
+        }
+
+        public bool IsEmpty
+        {
+            get
+            {
+                if (IsNull) return true;
+                if (Type == ValueType.LITERAL) return string.IsNullOrEmpty(LiteralValue);
+                if (Type == ValueType.OBJECT) return ObjectValue.Count == 0;
+                return true;
+            }
+        }
+
         public Value this[string name]
         {
             get
@@ -534,6 +555,13 @@ namespace DataUtilities.ReadableFileFormat
         }
 
         Location _location;
+
+        public T Deserialize<T>() where T : IDeserializableText
+        {
+            IDeserializableText instance = (IDeserializableText)System.Activator.CreateInstance(typeof(T));
+            instance.DeserializeText(this);
+            return (T)instance;
+        }
     }
 
     public readonly struct Location

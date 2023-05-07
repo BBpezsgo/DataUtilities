@@ -5,20 +5,21 @@ namespace DataUtilities
 {
     using ReadableFileFormat;
 
+    using System.Linq;
+
     class Yeah
     {
+        const string Path = @"C:\Users\bazsi\Desktop\Data Util Tests\";
+
         static void Main(string[] args)
         {
+            Serializer.Serializer serializer = new();
+            Random rand = new();
+
             {
-                var yeah = new Serializer.Serializer();
+                int[][] matrix = new int[16][];
+                for (int i = 0; i < matrix.Length; i++) matrix[i] = new int[16];
 
-                int w = 16;
-                int h = 16;
-
-                int[][] matrix = new int[h][];
-                for (int i = 0; i < matrix.Length; i++) matrix[i] = new int[w];
-
-                Random rand = new();
                 for (int y = 0; y < matrix.Length; y++)
                 {
                     for (int x = 0; x < matrix[y].Length; x++)
@@ -27,9 +28,9 @@ namespace DataUtilities
                     }
                 }
 
-                yeah.Serialize<int>(matrix);
+                serializer.SerializeArray(matrix);
 
-                yeah.Serialize(new Dictionary<double, int>
+                serializer.Serialize(new Dictionary<double, int>
                 {
                     { rand.NextDouble(), rand.Next() },
                     { rand.NextDouble(), rand.Next() },
@@ -37,7 +38,7 @@ namespace DataUtilities
                     { rand.NextDouble(), rand.Next() },
                 });
 
-                System.IO.File.WriteAllBytes("./yeah.bin", yeah.Result);
+                System.IO.File.WriteAllBytes(Path + "yeah.bin", serializer.Reinitialize());
 
                 for (int y = 0; y < matrix.Length; y++)
                 {
@@ -50,7 +51,7 @@ namespace DataUtilities
             }
             Console.WriteLine();
             {
-                var raw = System.IO.File.ReadAllBytes("./yeah.bin");
+                var raw = System.IO.File.ReadAllBytes(Path + "yeah.bin");
                 var yeah = new Serializer.Deserializer(raw);
                 int[][] matrix = yeah.DeserializeArray2D<int>();
 
@@ -73,24 +74,47 @@ namespace DataUtilities
                 yeah["list"] = Value.Object(new string[] { "a", "b", "c", "d", "e", "f" });
                 yeah["bol"] = Value.Literal(true);
                 yeah["empty"] = Value.Literal("");
-                System.IO.File.WriteAllText("./yeah.sdf", yeah.ToSDF(true));
-                System.IO.File.WriteAllText("./yeah.json", yeah.ToJSON(true));
-
-                Serializer.Serializer serializer = new();
-                serializer.Serialize(yeah);
-                System.IO.File.WriteAllBytes("./yeah_sdf.bin", serializer.Result);
-
-                Serializer.Deserializer deserializer = new(System.IO.File.ReadAllBytes("./yeah_sdf.bin"));
-                Value yeahBinLoaded = deserializer.DeserializeSdfValue();
-
-                Value yeahLoaded = Parser.LoadFile("./yeah.sdf").Value;
-
-                Console.WriteLine(yeah.ToSDF());
-                Console.WriteLine(yeahLoaded.ToSDF());
-
-                Console.WriteLine(yeah.Equals(yeahLoaded));
-                Console.WriteLine(yeah.Equals(yeahBinLoaded));
+                TestSDF(yeah);
             }
+            {
+                serializer.SerializeArray(new int[ushort.MaxValue]);
+                TestCompression(serializer.Reinitialize());
+            }
+        }
+
+        static void TestSDF(Value data)
+        {
+            Console.WriteLine($" === SDF ===");
+            System.IO.File.WriteAllText(Path + "yeah.sdf", data.ToSDF(true));
+            System.IO.File.WriteAllText(Path + "yeah.json", data.ToJSON(true));
+
+            Serializer.Serializer serializer = new();
+            serializer.Serialize(data);
+            System.IO.File.WriteAllBytes(Path + "yeah_sdf.bin", serializer.Result);
+
+            Serializer.Deserializer deserializer = new(System.IO.File.ReadAllBytes(Path + "yeah_sdf.bin"));
+            Value loaded_bin = deserializer.DeserializeSdfValue();
+
+            Value loaded_text = Parser.LoadFile(Path + "yeah.sdf").Value;
+
+            // Console.WriteLine(data.ToSDF());
+            // Console.WriteLine(loaded_text.ToSDF());
+
+            Console.WriteLine($"Parser: {data.Equals(loaded_text)}");
+            Console.WriteLine($"Deserializer: {data.Equals(loaded_bin)}");
+        }
+
+        static void TestCompression(byte[] data)
+        {
+            Console.WriteLine($" === COMPRESSION ===");
+            System.IO.File.WriteAllBytes(Path + "compression_0.bin", data);
+            System.IO.File.WriteAllBytes(Path + "compression_1.bin", Compression.RLE.Compress(data));
+
+            byte[] readed_1 = Compression.RLE.Decompress(System.IO.File.ReadAllBytes(Path + "compression_1.bin"));
+
+            System.IO.File.WriteAllBytes(Path + "compression_2.bin", readed_1);
+
+            Console.WriteLine($"RLE: {data.SequenceEqual(readed_1)}");
         }
     }
 }

@@ -1,14 +1,14 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>netstandard2.1</TargetFramework>
+    <TargetFramework>net6.0</TargetFramework>
     <RootNamespace>DataUtilities</RootNamespace>
     <IsPublishable>False</IsPublishable>
     <Nullable>disable</Nullable>
     <LangVersion>9</LangVersion>
-    <ApplicationManifest>Runtime\bb.data-utilities.asmdef</ApplicationManifest>
     <BaseOutputPath>Build~\bin\</BaseOutputPath>
     <BaseIntermediateOutputPath>Build~\obj\</BaseIntermediateOutputPath>
+    <OutputType>Exe</OutputType>
   </PropertyGroup>
 
   <ItemGroup>

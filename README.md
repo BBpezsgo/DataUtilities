@@ -1,6 +1,5 @@
 # Some data utilities (bruh)
 
-![.NET Standard 2.1](https://img.shields.io/badge/.NET-Standard_2.1-5C2D91)
 ![C# v9](https://img.shields.io/badge/C%23-v9-239120.svg)
 
 ## Custom File Format
