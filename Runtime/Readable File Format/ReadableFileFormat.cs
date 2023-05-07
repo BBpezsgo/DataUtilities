@@ -591,26 +591,13 @@ namespace DataUtilities.ReadableFileFormat
     /// Can parse <see cref="string"/> to <see cref="Value"/>.
     /// To start converting, just call the <see cref="Parse"/> function.
     /// </summary>
-    public class Parser
+    public class Parser : Text.TextDeserializer
     {
-        const int INFINITY = 1500;
-        string Content;
-
-        char CurrentCharacter => Content.Length == 0 ? '\0' : Content[0];
-
-        uint CurrentCharacterIndex = 0;
-        uint CurrentColumn = 0;
-        uint CurrentLine = 0;
         Location CurrentLocation => new(CurrentCharacterIndex, CurrentColumn, CurrentLine);
-
-        static readonly char[] SpaceCharacters = new char[] { ' ', '\t' };
-        static readonly char[] LinebrakCharacters = new char[] { '\r', '\n' };
-        static readonly char[] WhitespaceCharacters = new char[] { ' ', '\t', '\r', '\n' };
-        static readonly char EOL = '\n';
 
         public static Value Parse(string data) => new Parser(data)._Parse();
 
-        Parser(string data) => Content = data + ' ';
+        public Parser(string data) : base(data + ' ') { }
 
 #pragma warning disable IDE1006 // Naming Styles
         Value _Parse()
@@ -737,67 +724,6 @@ namespace DataUtilities.ReadableFileFormat
             var result = ConsumeUntil(":");
             ConsumeNext();
             return result;
-        }
-
-        void ConsumeCharacters(params char[] chars)
-        {
-            int endlessSafe = INFINITY;
-            while (chars.Contains(CurrentCharacter))
-            {
-                if (endlessSafe-- <= 0)
-                { Debug.LogError($"Endless loop!"); break; }
-                ConsumeNext();
-            }
-        }
-
-        char ConsumeNext()
-        {
-            char substring = Content[0];
-            Content = Content[1..];
-
-            CurrentCharacterIndex++;
-            CurrentColumn++;
-            if (substring == EOL)
-            {
-                CurrentLine++;
-                CurrentColumn = 0;
-            }
-
-            return substring;
-        }
-
-        string ConsumeUntil(string until)
-        {
-            int found = Content.IndexOf(until);
-            if (found == -1) return "";
-            return ConsumeUntil(found);
-        }
-
-        string ConsumeUntil(params char[] until)
-        {
-            int found = Content.IndexOfAny(until);
-            if (found == -1) return "";
-            return ConsumeUntil(found);
-        }
-
-        string ConsumeUntil(int until)
-        {
-            if (until <= 0) return "";
-            string substring = Content[..until];
-            Content = Content[(until)..];
-
-            CurrentCharacterIndex += (uint)substring.Length;
-            CurrentColumn++;
-            for (int i = 0; i < substring.Length; i++)
-            {
-                if (substring[i] == EOL)
-                {
-                    CurrentLine += (uint)substring.Length;
-                    CurrentColumn = 0;
-                }
-            }
-
-            return substring;
         }
 
         public static Value? LoadFile(string file) => !File.Exists(file) ? null : new Parser(File.ReadAllText(file))._Parse();
