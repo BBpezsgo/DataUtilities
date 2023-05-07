@@ -22,7 +22,9 @@ namespace DataUtilities.ReadableFileFormat
 
     [System.Diagnostics.DebuggerDisplay("{" + nameof(GetDebuggerDisplay) + "(),nq}")]
 #pragma warning disable CS0659
+#pragma warning disable CS0661
     public struct Value
+#pragma warning restore CS0661
 #pragma warning restore CS0659
     {
         /// <summary>
@@ -461,6 +463,8 @@ namespace DataUtilities.ReadableFileFormat
             { result[i] = v[i]; }
             return result;
         }
+        public static bool operator ==(Value left, Value right) => left.Equals(right);
+        public static bool operator !=(Value left, Value right) => !(left == right);
 
         [System.Flags]
         public enum CombineOptions : ushort
@@ -548,8 +552,8 @@ namespace DataUtilities.ReadableFileFormat
         {
             get
             {
-                if (this.Type != ValueType.OBJECT) return new string[0];
-                if (ObjectValue == null) return new string[0];
+                if (this.Type != ValueType.OBJECT) return System.Array.Empty<string>();
+                if (ObjectValue == null) return System.Array.Empty<string>();
                 return ObjectValue.Keys;
             }
         }

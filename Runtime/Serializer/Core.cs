@@ -10,7 +10,6 @@ namespace DataUtilities.Serializer
         INT32,
     }
 
-
     [System.Serializable]
     public class TooSmallUnitException : System.Exception
     {
