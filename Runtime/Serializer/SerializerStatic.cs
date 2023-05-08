@@ -267,23 +267,6 @@ namespace DataUtilities.Serializer
             return s.Result;
         }
 
-        /// <exception cref="TooSmallUnitException"></exception>
-        static byte[] SerializeArrayLength(INTEGER_TYPE type, int length)
-        {
-            switch (type)
-            {
-                case INTEGER_TYPE.INT8:
-                    if (length < byte.MinValue || length > byte.MaxValue) throw new TooSmallUnitException($"The specified array length unit {type} is too small for the value {length}");
-                    return Serialize((byte)length);
-                case INTEGER_TYPE.INT16:
-                    if (length < short.MinValue || length > short.MaxValue) throw new TooSmallUnitException($"The specified array length unit {type} is too small for the value {length}");
-                    return Serialize((short)length);
-                case INTEGER_TYPE.INT32:
-                default:
-                    return Serialize(length);
-            }
-        }
-
         #endregion
 
         #region Enumerables

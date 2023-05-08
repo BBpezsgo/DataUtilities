@@ -1,11 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace DataUtilities
 {
     using ReadableFileFormat;
-
-    using System.Linq;
 
     class Yeah
     {
@@ -79,9 +78,6 @@ namespace DataUtilities
             {
                 serializer.Serialize(new int[ushort.MaxValue]);
                 TestCompression(serializer.Reinitialize());
-            }
-            {
-
             }
         }
 

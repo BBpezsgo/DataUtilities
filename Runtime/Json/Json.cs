@@ -24,13 +24,11 @@ namespace DataUtilities.Json
 
     public class Parser : Text.TextDeserializer
     {
-        public static Value Parse(string data) => new Parser(data)._Parse();
+        public static Value Parse(string data) => new Parser(data).ExpectRootValue();
 
         public Parser(string data) : base(data) { }
 
-#pragma warning disable IDE1006
-        Value _Parse() => ExpectValue();
-#pragma warning restore IDE1006
+        Value ExpectRootValue() => ExpectValue();
 
         Value ExpectValue()
         {
@@ -186,7 +184,7 @@ namespace DataUtilities.Json
             throw new JsonSyntaxException($"Unexpected character '{CurrentCharacter}'; expected property name");
         }
 
-        public static Value? LoadFile(string file) => !File.Exists(file) ? null : new Parser(File.ReadAllText(file))._Parse();
+        public static Value? LoadFile(string file) => !File.Exists(file) ? null : new Parser(File.ReadAllText(file)).ExpectRootValue();
         public static bool TryLoadFile(string file, out Value result)
         {
             if (!File.Exists(file))
@@ -196,7 +194,7 @@ namespace DataUtilities.Json
             }
             else
             {
-                result = new Parser(File.ReadAllText(file))._Parse();
+                result = new Parser(File.ReadAllText(file)).ExpectRootValue();
                 return true;
             }
         }
