@@ -277,12 +277,20 @@ namespace DataUtilities.Serializer
         /// <see cref="string"/>,
         /// <see cref="ReadableFileFormat.Value"/>
         /// </typeparam>
-        public void Serialize<T>(T[] v, INTEGER_TYPE length = INTEGER_TYPE.INT32)
+        public void Serialize<T>(T[] v, INTEGER_TYPE length = INTEGER_TYPE.INT32) where T : struct
         {
             TypeSerializer<T> method = GetSerializerForType<T>();
             SerializeArrayLength(length, v.Length);
             for (int i = 0; i < v.Length; i++)
             { method.Invoke(v[i]); }
+        }
+
+        /// <exception cref="TooSmallUnitException"></exception>
+        public void Serialize(string[] v, INTEGER_TYPE length = INTEGER_TYPE.INT32)
+        {
+            SerializeArrayLength(length, v.Length);
+            for (int i = 0; i < v.Length; i++)
+            { Serialize(v[i]); }
         }
 
         /// <exception cref="TooSmallUnitException"></exception>
@@ -304,7 +312,15 @@ namespace DataUtilities.Serializer
         /// <see cref="string"/>,
         /// <see cref="ReadableFileFormat.Value"/>
         /// </typeparam>
-        public void Serialize<T>(T[][] v, INTEGER_TYPE length = INTEGER_TYPE.INT32)
+        public void Serialize<T>(T[][] v, INTEGER_TYPE length = INTEGER_TYPE.INT32) where T : struct
+        {
+            SerializeArrayLength(length, v.Length);
+            for (int i = 0; i < v.Length; i++)
+            { Serialize(v[i], length); }
+        }
+
+        /// <exception cref="TooSmallUnitException"></exception>
+        public void Serialize(string[][] v, INTEGER_TYPE length = INTEGER_TYPE.INT32)
         {
             SerializeArrayLength(length, v.Length);
             for (int i = 0; i < v.Length; i++)
@@ -330,7 +346,15 @@ namespace DataUtilities.Serializer
         /// <see cref="string"/>,
         /// <see cref="ReadableFileFormat.Value"/>
         /// </typeparam>
-        public void Serialize<T>(T[][][] v, INTEGER_TYPE length = INTEGER_TYPE.INT32)
+        public void Serialize<T>(T[][][] v, INTEGER_TYPE length = INTEGER_TYPE.INT32) where T : struct
+        {
+            SerializeArrayLength(length, v.Length);
+            for (int i = 0; i < v.Length; i++)
+            { Serialize(v[i], length); }
+        }
+
+        /// <exception cref="TooSmallUnitException"></exception>
+        public void Serialize(string[][][] v, INTEGER_TYPE length = INTEGER_TYPE.INT32)
         {
             SerializeArrayLength(length, v.Length);
             for (int i = 0; i < v.Length; i++)
@@ -416,7 +440,7 @@ namespace DataUtilities.Serializer
         }
 
         /// <exception cref="NotImplementedException"></exception>
-        public void Serialize<T>(IEnumerable<T> v)
+        public void Serialize<T>(IEnumerable<T> v) where T : struct
         {
             TypeSerializer<T> method = GetSerializerForType<T>();
             Serialize(v, (s, item) =>

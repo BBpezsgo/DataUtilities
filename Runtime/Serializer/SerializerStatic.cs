@@ -208,10 +208,18 @@ namespace DataUtilities.Serializer
         /// <see cref="string"/>,
         /// <see cref="ReadableFileFormat.Value"/>
         /// </typeparam>
-        public static byte[] Serialize<T>(T[] v, INTEGER_TYPE length = INTEGER_TYPE.INT32)
+        public static byte[] Serialize<T>(T[] v, INTEGER_TYPE length = INTEGER_TYPE.INT32) where T : struct
         {
             Serializer s = new();
             s.Serialize<T>(v, length);
+            return s.Result;
+        }
+
+        /// <exception cref="TooSmallUnitException"></exception>
+        public static byte[] Serialize(string[] v, INTEGER_TYPE length = INTEGER_TYPE.INT32)
+        {
+            Serializer s = new();
+            s.Serialize(v, length);
             return s.Result;
         }
 
@@ -234,10 +242,18 @@ namespace DataUtilities.Serializer
         /// <see cref="string"/>,
         /// <see cref="ReadableFileFormat.Value"/>
         /// </typeparam>
-        public static byte[] Serialize<T>(T[][] v, INTEGER_TYPE length = INTEGER_TYPE.INT32)
+        public static byte[] Serialize<T>(T[][] v, INTEGER_TYPE length = INTEGER_TYPE.INT32) where T : struct
         {
             Serializer s = new();
             s.Serialize<T>(v, length);
+            return s.Result;
+        }
+
+        /// <exception cref="TooSmallUnitException"></exception>
+        public static byte[] Serialize(string[][] v, INTEGER_TYPE length = INTEGER_TYPE.INT32)
+        {
+            Serializer s = new();
+            s.Serialize(v, length);
             return s.Result;
         }
 
@@ -260,10 +276,18 @@ namespace DataUtilities.Serializer
         /// <see cref="string"/>,
         /// <see cref="ReadableFileFormat.Value"/>
         /// </typeparam>
-        public static byte[] Serialize<T>(T[][][] v, INTEGER_TYPE length = INTEGER_TYPE.INT32)
+        public static byte[] Serialize<T>(T[][][] v, INTEGER_TYPE length = INTEGER_TYPE.INT32) where T : struct
         {
             Serializer s = new();
             s.Serialize<T>(v, length);
+            return s.Result;
+        }
+
+        /// <exception cref="TooSmallUnitException"></exception>
+        public static byte[] Serialize(string[][][] v, INTEGER_TYPE length = INTEGER_TYPE.INT32)
+        {
+            Serializer s = new();
+            s.Serialize(v, length);
             return s.Result;
         }
 
@@ -311,7 +335,7 @@ namespace DataUtilities.Serializer
         }
 
         /// <exception cref="NotImplementedException"></exception>
-        public static byte[] Serialize<T>(IEnumerable<T> v)
+        public static byte[] Serialize<T>(IEnumerable<T> v) where T : struct
         {
             Serializer s = new();
             s.Serialize<T>(v);
