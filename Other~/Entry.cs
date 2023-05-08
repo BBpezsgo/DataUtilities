@@ -28,7 +28,7 @@ namespace DataUtilities
                     }
                 }
 
-                serializer.SerializeArray(matrix);
+                serializer.Serialize(matrix);
 
                 serializer.Serialize(new Dictionary<double, int>
                 {
@@ -77,8 +77,11 @@ namespace DataUtilities
                 TestSDF(yeah);
             }
             {
-                serializer.SerializeArray(new int[ushort.MaxValue]);
+                serializer.Serialize(new int[ushort.MaxValue]);
                 TestCompression(serializer.Reinitialize());
+            }
+            {
+
             }
         }
 
