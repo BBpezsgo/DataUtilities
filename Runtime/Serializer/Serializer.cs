@@ -30,7 +30,9 @@ namespace DataUtilities.Serializer
                 GenerateTypeSerializer<short>(Serialize),
                 GenerateTypeSerializer<ushort>(Serialize),
                 GenerateTypeSerializer<char>(Serialize),
+#if NET5_0_OR_GREATER
                 GenerateTypeSerializer<Half>(Serialize),
+#endif
 
                 GenerateTypeSerializer<int>(Serialize),
                 GenerateTypeSerializer<uint>(Serialize),
@@ -107,6 +109,7 @@ namespace DataUtilities.Serializer
             this.result.AddRange(result);
         }
 
+#if NET5_0_OR_GREATER
         /// <summary>
         /// Serializes the given <see cref="Half"/> value (2 bytes)
         /// </summary>
@@ -116,6 +119,7 @@ namespace DataUtilities.Serializer
             if (BitConverter.IsLittleEndian) Array.Reverse(result);
             this.result.AddRange(result);
         }
+#endif
 
         // --- 4 bytes ---
 
@@ -220,7 +224,7 @@ namespace DataUtilities.Serializer
             }
         }
 
-        #endregion
+#endregion
 
         #region User-Defined Types
 

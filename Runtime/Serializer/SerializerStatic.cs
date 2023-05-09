@@ -47,6 +47,7 @@ namespace DataUtilities.Serializer
             return result;
         }
 
+#if NET5_0_OR_GREATER
         /// <summary>
         /// Serializes the given <see cref="Half"/> value (2 bytes)
         /// </summary>
@@ -56,6 +57,7 @@ namespace DataUtilities.Serializer
             if (BitConverter.IsLittleEndian) Array.Reverse(result);
             return result;
         }
+#endif
 
         // --- 4 bytes ---
 
@@ -141,7 +143,7 @@ namespace DataUtilities.Serializer
             return s.Result;
         }
 
-        #endregion
+#endregion
 
         #region User-Defined Types
 

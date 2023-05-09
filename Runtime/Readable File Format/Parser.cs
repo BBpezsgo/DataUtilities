@@ -1,5 +1,9 @@
 ﻿using System.IO;
 
+#if UNITY
+using Debug = UnityEngine.Debug;
+#endif
+
 namespace DataUtilities.ReadableFileFormat
 {
     /// <summary>

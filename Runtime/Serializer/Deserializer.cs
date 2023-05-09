@@ -29,7 +29,9 @@ namespace DataUtilities.Serializer
                 GenerateTypeDeserializer(DeserializeInt16),
                 GenerateTypeDeserializer(DeserializeUInt16),
                 GenerateTypeDeserializer(DeserializeChar),
+#if NET5_0_OR_GREATER
                 GenerateTypeDeserializer(DeserializeHalf),
+#endif
 
                 GenerateTypeDeserializer(DeserializeInt32),
                 GenerateTypeDeserializer(DeserializeUInt32),
@@ -120,6 +122,7 @@ namespace DataUtilities.Serializer
             return BitConverter.ToChar(data, 0);
         }
 
+#if NET5_0_OR_GREATER
         /// <summary>
         /// Deserializes the following <see cref="Half"/> data (2 bytes)
         /// </summary>
@@ -130,6 +133,7 @@ namespace DataUtilities.Serializer
             if (BitConverter.IsLittleEndian) Array.Reverse(data);
             return BitConverter.ToHalf(data, 0);
         }
+#endif
 
         // --- 4 bytes ---
 
@@ -237,7 +241,7 @@ namespace DataUtilities.Serializer
             }
         }
 
-        #endregion
+#endregion
 
         #region User-Defined Types
 
