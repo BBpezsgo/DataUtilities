@@ -249,11 +249,11 @@ namespace DataUtilities.Serializer
         /// Deserializes the following <typeparamref name="T"/> data.<br/>
         /// This creates an instance of <typeparamref name="T"/> and then calls the <see cref="ISerializable.Deserialize(Deserializer)"/> method on the instance.
         /// </summary>
-        public ISerializable<T> DeserializeObject<T>() where T : ISerializable<T>
+        public T DeserializeObject<T>() where T : ISerializable<T>
         {
             var instance = (ISerializable<T>)Activator.CreateInstance(typeof(T));
             instance.Deserialize(this);
-            return instance;
+            return (T)instance;
         }
 
         public T DeserializeObject<T>(Func<Deserializer, T> callback)

@@ -79,6 +79,18 @@ namespace DataUtilities
                 serializer.Serialize(new int[ushort.MaxValue]);
                 TestCompression(serializer.Reinitialize());
             }
+            {
+                FilePacker.Packer packer = new(new FilePacker.PackHeader()
+                {
+                    SaveMetadata = true,
+                });
+                packer.Pack(
+                    @"C:\Users\bazsi\Desktop\Nothing Assets\",
+                    @"C:\Users\bazsi\Desktop\Data Util Tests\bruh.bin");
+            }
+            {
+                var virtualFolder = FilePacker.VirtualUnpacker.Unpack(@"C:\Users\bazsi\Desktop\Data Util Tests\bruh.bin");
+            }
         }
 
         static void TestSDF(Value data)
