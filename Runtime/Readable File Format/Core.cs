@@ -29,6 +29,10 @@ namespace DataUtilities.ReadableFileFormat
     {
         void DeserializeText(Value data);
     }
+    public interface IFullySerializableText : ISerializableText, IDeserializableText
+    {
+
+    }
 
     public static class Extensions
     {
@@ -76,5 +80,17 @@ namespace DataUtilities.ReadableFileFormat
             { result.Add(pair.Key, converter.Invoke(pair.Value)); }
             return result;
         }
+#nullable enable
+        public static Dictionary<string, T> ConvertNotAll<T>(this Dictionary<string, Value> self, System.Func<Value, T?> converter)
+        {
+            Dictionary<string, T> result = new();
+            foreach (var pair in self)
+            {
+                T? v = converter.Invoke(pair.Value);
+                if (v != null) result.Add(pair.Key, v);
+            }
+            return result;
+        }
+#nullable disable
     }
 }

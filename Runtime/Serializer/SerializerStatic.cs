@@ -3,7 +3,7 @@ using System.Collections.Generic;
 
 namespace DataUtilities.Serializer
 {
-    internal static class SerializerStatic
+    public static class SerializerStatic
     {
 
         #region Generic Types

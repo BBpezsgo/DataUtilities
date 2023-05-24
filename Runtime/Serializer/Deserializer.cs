@@ -241,13 +241,13 @@ namespace DataUtilities.Serializer
             }
         }
 
-#endregion
+        #endregion
 
         #region User-Defined Types
 
         /// <summary>
         /// Deserializes the following <typeparamref name="T"/> data.<br/>
-        /// This creates an instance of <typeparamref name="T"/> and then calls the <see cref="ISerializable.Deserialize(Deserializer)"/> method on the instance.
+        /// This creates an instance of <typeparamref name="T"/> and then calls the <see cref="ISerializable{T}.Deserialize(Deserializer)"/> method on the instance.
         /// </summary>
         public T DeserializeObject<T>() where T : ISerializable<T>
         {

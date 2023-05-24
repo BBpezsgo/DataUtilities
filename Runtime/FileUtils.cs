@@ -183,6 +183,12 @@ namespace DataUtilities.FilePacker
         public string Text { get; }
     }
 
+    public interface IModifiableFile : IFile
+    {
+        public new byte[] Bytes { get; set; }
+        public new string Text { get; set; }
+    }
+
     public static class Glob
     {
         /// <summary>
@@ -218,8 +224,20 @@ namespace DataUtilities.FilePacker
         public IEnumerable<IFile> Files { get; }
         public IEnumerable<IFolder> Folders { get; }
     }
+    public interface IModifiableFolder : IFolder
+    {
+        public void AddFile(string fileName);
+        public void AddFolder(string folderName);
+    }
+    public interface IModifiableFolder<TFile, TFolder> : IFolder
+        where TFile : IFile
+        where TFolder : IFolder
+    {
+        public void AddFile(TFile files);
+        public void AddFolder(TFolder folders);
+    }
 
-    public class VirtualFolder : VirtualThing, IFolder
+    public class VirtualFolder : VirtualThing, IModifiableFolder<VirtualFile, VirtualFolder>
     {
         readonly List<VirtualFile> files = new();
         readonly List<VirtualFolder> folders = new();
@@ -250,18 +268,21 @@ namespace DataUtilities.FilePacker
             return null;
         }
 
-        public void Add(params VirtualFile[] files)
+        public void AddFiles(params VirtualFile[] files)
         {
             for (int i = 0; i < files.Length; i++)
             { files[i].Parent = this; }
             this.files.AddRange(files);
         }
-        public void Add(params VirtualFolder[] folders)
+        public void AddFolders(params VirtualFolder[] folders)
         {
             for (int i = 0; i < folders.Length; i++)
             { folders[i].Parent = this; }
             this.folders.AddRange(folders);
         }
+
+        public void AddFile(VirtualFile file) => this.files.Add(file);
+        public void AddFolder(VirtualFolder folder) => this.folders.Add(folder);
     }
 
     public class VirtualUnpacker
@@ -285,8 +306,8 @@ namespace DataUtilities.FilePacker
         }
         void UnpackFolder(Deserializer deserializer)
         {
-            folderStack.Peek().Add(deserializer.DeserializeArray(DeserializeFolder, INTEGER_TYPE.INT32));
-            folderStack.Peek().Add(deserializer.DeserializeArray(DeserializeFile, INTEGER_TYPE.INT32));
+            folderStack.Peek().AddFolders(deserializer.DeserializeArray(DeserializeFolder, INTEGER_TYPE.INT32));
+            folderStack.Peek().AddFiles(deserializer.DeserializeArray(DeserializeFile, INTEGER_TYPE.INT32));
         }
 
         VirtualFolder DeserializeFolder(Deserializer deserializer)

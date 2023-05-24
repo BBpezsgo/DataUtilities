@@ -293,7 +293,18 @@ namespace DataUtilities.ReadableFileFormat
 
             if (Type == ValueType.LITERAL)
             {
-                result += $"\"{(LiteralValue ?? "").Replace("\\", "\\\\").Replace("\"", "\\\"")}\"";
+                if (Float.HasValue)
+                {
+                    result += Float.Value.ToString(System.Globalization.CultureInfo.InvariantCulture);
+                }
+                else if (Bool.HasValue)
+                {
+                    result += Bool.Value ? "true" : "false";
+                }
+                else
+                {
+                    result += $"\"{(LiteralValue ?? "").Replace(@"\", @"\\").Replace("\"", "\\\"")}\"";
+                }
             }
             else if (Type == ValueType.OBJECT)
             {
@@ -308,10 +319,17 @@ namespace DataUtilities.ReadableFileFormat
                     }
                     else
                     {
-                        result += "{\r\n";
-                        foreach (var pair in ObjectValue)
-                        { result += "".PadLeft(indent + 2, ' ') + $"{pair.Key}: {pair.Value.ToSDF(minimal, indent + 2)}\r\n"; }
-                        result += "".PadLeft(indent, ' ') + "}";
+                        if (ObjectValue.Count == 0)
+                        {
+                            result += "{ }";
+                        }
+                        else
+                        {
+                            result += "{\r\n";
+                            foreach (var pair in ObjectValue)
+                            { result += "".PadLeft(indent + 2, ' ') + $"{pair.Key}: {pair.Value.ToSDF(minimal, indent + 2)}\r\n"; }
+                            result += "".PadLeft(indent, ' ') + "}";
+                        }
                     }
                 }
                 else
@@ -326,10 +344,17 @@ namespace DataUtilities.ReadableFileFormat
                     }
                     else
                     {
-                        result += "[\r\n";
-                        foreach (var item in arrayValue)
-                        { result += "".PadLeft(indent + 2, ' ') + $"{item.ToSDF(minimal, indent + 2)}\r\n"; }
-                        result += "".PadLeft(indent, ' ') + "]";
+                        if (arrayValue.Length == 0)
+                        {
+                            result += "[ ]";
+                        }
+                        else
+                        {
+                            result += "[\r\n";
+                            foreach (var item in arrayValue)
+                            { result += "".PadLeft(indent + 2, ' ') + $"{item.ToSDF(minimal, indent + 2)}\r\n"; }
+                            result += "".PadLeft(indent, ' ') + "]";
+                        }
                     }
                 }
             }
