@@ -2,9 +2,16 @@
 
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 
 namespace DataUtilities.FilePacker
 {
+    enum ThingType : byte
+    {
+        Real,
+        UserDefined,
+    }
+
     public class PackHeader : ISerializable<PackHeader>
     {
         public bool SaveMetadata;
@@ -37,9 +44,23 @@ namespace DataUtilities.FilePacker
             PackFolder(serializer, folder);
             return serializer.Result;
         }
+        public byte[] Pack(IFolder folder)
+        {
+            Serializer.Serializer serializer = new();
+            serializer.Serialize(Header);
+            PackFolder(serializer, folder);
+            return serializer.Result;
+        }
 
         public void Pack(string folder, string output) => Pack(new DirectoryInfo(folder), output);
         public void Pack(DirectoryInfo folder, string output)
+        {
+            Serializer.Serializer serializer = new();
+            serializer.Serialize(Header);
+            PackFolder(serializer, folder);
+            File.WriteAllBytes(output, serializer.Result);
+        }
+        public void Pack(IFolder folder, string output)
         {
             Serializer.Serializer serializer = new();
             serializer.Serialize(Header);
@@ -58,6 +79,7 @@ namespace DataUtilities.FilePacker
 
         void SerializeFolder(Serializer.Serializer serializer, DirectoryInfo folder)
         {
+            serializer.Serialize((byte)ThingType.Real);
             serializer.Serialize(folder.Name);
 
             if (Header.SaveMetadata)
@@ -72,6 +94,7 @@ namespace DataUtilities.FilePacker
         }
         void SerializeFile(Serializer.Serializer serializer, FileInfo file)
         {
+            serializer.Serialize((byte)ThingType.Real);
             serializer.Serialize(file.Name);
             serializer.Serialize(File.ReadAllBytes(file.FullName));
             if (Header.SaveMetadata)
@@ -82,6 +105,29 @@ namespace DataUtilities.FilePacker
                 serializer.Serialize(file.LastAccessTimeUtc.Ticks);
                 serializer.Serialize(file.LastWriteTimeUtc.Ticks);
             }
+        }
+
+        void PackFolder(Serializer.Serializer serializer, IFolder folder)
+        {
+            IFolder[] folders = folder.Folders.ToArray();
+            IFile[] files = folder.Files.ToArray();
+
+            serializer.Serialize(folders, SerializeFolder, INTEGER_TYPE.INT32);
+            serializer.Serialize(files, SerializeFile, INTEGER_TYPE.INT32);
+        }
+
+        void SerializeFolder(Serializer.Serializer serializer, IFolder folder)
+        {
+            serializer.Serialize((byte)ThingType.UserDefined);
+            serializer.Serialize(folder.Name);
+
+            PackFolder(serializer, folder);
+        }
+        void SerializeFile(Serializer.Serializer serializer, IFile file)
+        {
+            serializer.Serialize((byte)ThingType.UserDefined);
+            serializer.Serialize(file.Name);
+            serializer.Serialize(File.ReadAllBytes(file.FullName));
         }
     }
 
@@ -124,10 +170,12 @@ namespace DataUtilities.FilePacker
 
         DirectoryInfo DeserializeFolder(Deserializer deserializer)
         {
+            ThingType thingType = (ThingType)deserializer.DeserializeByte();
+
             string name = deserializer.DeserializeString();
             DirectoryInfo folder = Directory.CreateDirectory(Path.Combine(CurrentPath, name));
 
-            if (Header.SaveMetadata)
+            if (thingType == ThingType.Real && Header.SaveMetadata)
             {
                 folder.Attributes = (FileAttributes)deserializer.DeserializeInt32();
                 folder.CreationTimeUtc = new System.DateTime(deserializer.DeserializeInt64());
@@ -142,6 +190,8 @@ namespace DataUtilities.FilePacker
         }
         FileInfo DeserializeFile(Deserializer deserializer)
         {
+            ThingType thingType = (ThingType)deserializer.DeserializeByte();
+
             string name = deserializer.DeserializeString();
             byte[] content = deserializer.DeserializeArray<byte>(INTEGER_TYPE.INT32);
             string path = Path.Combine(CurrentPath, name);
@@ -150,7 +200,7 @@ namespace DataUtilities.FilePacker
             { stream.Write(content, 0, content.Length); }
             FileInfo file = new(path);
 
-            if (Header.SaveMetadata)
+            if (thingType == ThingType.Real && Header.SaveMetadata)
             {
                 file.Attributes = (FileAttributes)deserializer.DeserializeInt32();
                 file.IsReadOnly = deserializer.DeserializeBoolean();
@@ -312,10 +362,11 @@ namespace DataUtilities.FilePacker
 
         VirtualFolder DeserializeFolder(Deserializer deserializer)
         {
+            ThingType thingType = (ThingType)deserializer.DeserializeByte();
             string name = deserializer.DeserializeString();
             VirtualFolder folder = new(name);
 
-            if (Header.SaveMetadata)
+            if (thingType == ThingType.Real && Header.SaveMetadata)
             {
                 deserializer.DeserializeInt32();
                 deserializer.DeserializeInt64();
@@ -330,10 +381,11 @@ namespace DataUtilities.FilePacker
         }
         VirtualFile DeserializeFile(Deserializer deserializer)
         {
+            ThingType thingType = (ThingType)deserializer.DeserializeByte();
             string name = deserializer.DeserializeString();
             byte[] content = deserializer.DeserializeArray<byte>(INTEGER_TYPE.INT32);
 
-            if (Header.SaveMetadata)
+            if (thingType == ThingType.Real && Header.SaveMetadata)
             {
                 deserializer.DeserializeInt32();
                 deserializer.DeserializeBoolean();
