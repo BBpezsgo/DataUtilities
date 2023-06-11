@@ -3,12 +3,11 @@
   <PropertyGroup>
     <TargetFramework>net6.0</TargetFramework>
     <RootNamespace>DataUtilities</RootNamespace>
-    <IsPublishable>False</IsPublishable>
     <Nullable>disable</Nullable>
     <LangVersion>9</LangVersion>
     <BaseOutputPath>Build~\bin\</BaseOutputPath>
     <BaseIntermediateOutputPath>Build~\obj\</BaseIntermediateOutputPath>
-    <OutputType>Exe</OutputType>
+    <OutputType>Library</OutputType>
   </PropertyGroup>
 
   <ItemGroup>
