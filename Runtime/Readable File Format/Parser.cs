@@ -1,4 +1,5 @@
-﻿using System.IO;
+﻿using System.Collections.Generic;
+using System.IO;
 
 #if UNITY
 using Debug = UnityEngine.Debug;
@@ -43,7 +44,7 @@ namespace DataUtilities.ReadableFileFormat
                 ConsumeCharacters(WhitespaceCharacters);
                 string propertyName = ExpectPropertyName();
                 ConsumeCharacters(WhitespaceCharacters);
-                Value propertyValue = ExpectValue();
+                Value propertyValue = ExpectValue(propertyName);
                 root[propertyName] = propertyValue;
                 ConsumeCharacters(WhitespaceCharacters);
 
@@ -57,7 +58,7 @@ namespace DataUtilities.ReadableFileFormat
             return root;
         }
 
-        Value ExpectValue()
+        Value ExpectValue(params string[] parentNames)
         {
             ConsumeCharacters(WhitespaceCharacters);
             var loc = CurrentLocation;
@@ -67,6 +68,8 @@ namespace DataUtilities.ReadableFileFormat
                 ConsumeCharacters(WhitespaceCharacters);
                 Value objectValue = Value.Object();
                 objectValue.Location = loc;
+                objectValue.path = parentNames;
+                objectValue.Location = loc;
                 int endlessSafe = INFINITY;
                 while (CurrentCharacter != '}')
                 {
@@ -75,7 +78,7 @@ namespace DataUtilities.ReadableFileFormat
                     ConsumeCharacters(WhitespaceCharacters);
                     string propertyName = ExpectPropertyName();
                     ConsumeCharacters(WhitespaceCharacters);
-                    Value? propertyValue = ExpectValue();
+                    Value? propertyValue = ExpectValue(new List<string>(parentNames) { propertyName }.ToArray());
                     if (propertyValue.HasValue)
                     { objectValue[propertyName] = propertyValue.Value; }
                     else
@@ -91,6 +94,7 @@ namespace DataUtilities.ReadableFileFormat
                 ConsumeCharacters(WhitespaceCharacters);
                 Value objectValue = Value.Object();
                 objectValue.Location = loc;
+                objectValue.path = parentNames;
                 int endlessSafe = INFINITY;
                 int index = 0;
                 while (CurrentCharacter != ']')
@@ -98,7 +102,7 @@ namespace DataUtilities.ReadableFileFormat
                     if (endlessSafe-- <= 0)
                     { Debug.LogError($"Endless loop!"); break; }
                     ConsumeCharacters(WhitespaceCharacters);
-                    Value? listItemValue = ExpectValue();
+                    Value? listItemValue = ExpectValue(new List<string>(parentNames) { index.ToString() }.ToArray());
                     if (listItemValue.HasValue)
                     { objectValue[index++] = listItemValue.Value; }
                     else
@@ -126,6 +130,7 @@ namespace DataUtilities.ReadableFileFormat
                 ConsumeNext();
                 var result = Value.Literal(literalValue);
                 result.Location = loc;
+                result.path = parentNames;
                 return result;
             }
 
@@ -133,6 +138,7 @@ namespace DataUtilities.ReadableFileFormat
                 var anyValue = ConsumeUntil('{', '\r', '\n', ' ', '\t', '\0');
                 var result = Value.Literal(anyValue);
                 result.Location = loc;
+                result.path = parentNames;
                 return result;
             }
         }

@@ -219,7 +219,7 @@ namespace DataUtilities.Serializer
             int _length = DeserializeArrayLength(length);
             if (_length == -1) return null;
             byte type = DeserializeByte();
-            if (length == 0) return string.Empty;
+            if (_length == 0) return string.Empty;
             char[] result = new char[_length];
             switch (type)
             {

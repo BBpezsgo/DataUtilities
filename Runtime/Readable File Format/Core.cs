@@ -10,6 +10,8 @@ namespace DataUtilities.ReadableFileFormat
         readonly bool _isNull;
         internal bool IsNull => _isNull;
 
+        internal static Location Null => new();
+
         public Location(uint character, uint column, uint line)
         {
             Character = character;

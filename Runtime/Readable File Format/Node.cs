@@ -33,14 +33,27 @@ namespace DataUtilities.ReadableFileFormat
         string LiteralValue;
         Dictionary<string, Value> ObjectValue;
 
+        internal string[] path;
+
+        public string Path => path == null ? null : string.Join('/', path);
+
+        internal Value(string[] path)
+        {
+            this.LiteralValue = null;
+            this.Type = ValueType.LITERAL;
+            this.ObjectValue = null;
+            this._location = Location.Null;
+            this.path = path;
+        }
+
         /// <summary>
         /// Returns the raw literal value, or <see langword="null"/> if none.
         /// </summary>
-        public string String => LiteralValue ?? null;
+        public readonly string String => LiteralValue ?? null;
         /// <summary>
         /// Returns the <see cref="float"/> literal value, or <see langword="null"/> if the literal value cannot be parsed to a <see cref="float"/> value.
         /// </summary>
-        public float? Float
+        public readonly float? Float
         {
             get
             {
@@ -52,7 +65,7 @@ namespace DataUtilities.ReadableFileFormat
         /// <summary>
         /// Returns the <see cref="int"/> literal value, or <see langword="null"/> if the literal value cannot be parsed to a <see cref="int"/> value.
         /// </summary>
-        public int? Int
+        public readonly int? Int
         {
             get
             {
@@ -71,7 +84,7 @@ namespace DataUtilities.ReadableFileFormat
         /// "1" => <see langword="true"/><br/>
         /// "0" => <see langword="false"/>
         /// </summary>
-        public bool? Bool
+        public readonly bool? Bool
         {
             get
             {
@@ -91,7 +104,7 @@ namespace DataUtilities.ReadableFileFormat
         /// <summary>
         /// Returns the array equivalent of the object value, or null if the node has no child named "Length", or an IndexOutOfRange exception occur.
         /// </summary>
-        public Value[] Array
+        public readonly Value[] Array
         {
             get
             {
@@ -107,7 +120,7 @@ namespace DataUtilities.ReadableFileFormat
             }
         }
 
-        public bool IsNull
+        public readonly bool IsNull
         {
             get
             {
@@ -117,7 +130,7 @@ namespace DataUtilities.ReadableFileFormat
             }
         }
 
-        public bool IsEmpty
+        public readonly bool IsEmpty
         {
             get
             {
@@ -130,7 +143,7 @@ namespace DataUtilities.ReadableFileFormat
 
         public Value this[string name]
         {
-            get
+            readonly get
             {
                 if (Has(name)) return ObjectValue[name];
                 return Value.Literal(null);
@@ -142,7 +155,7 @@ namespace DataUtilities.ReadableFileFormat
             }
         }
 
-        public Value this[params string[] names]
+        public readonly Value this[params string[] names]
         {
             get
             {
@@ -157,7 +170,7 @@ namespace DataUtilities.ReadableFileFormat
             set => this[name.ToString()] = value;
         }
 
-        public bool TryGetNode(string name, out Value value)
+        public readonly bool TryGetNode(string name, out Value value)
         {
             if (ObjectValue == null) { value = Value.Literal(null); return false; }
             return ObjectValue.TryGetValue(name, out value);
@@ -165,8 +178,8 @@ namespace DataUtilities.ReadableFileFormat
         /// <summary>
         /// Returns <see langword="true"/> if the object value has a child named <paramref name="name"/>, otherwise <see langword="false"/>.
         /// </summary>
-        public bool Has(string name) => ObjectValue != null && ObjectValue.ContainsKey(name);
-        public Value? TryGetNode(string name) => Has(name) ? ObjectValue[name] : null;
+        public readonly bool Has(string name) => ObjectValue != null && ObjectValue.ContainsKey(name);
+        public readonly Value? TryGetNode(string name) => Has(name) ? ObjectValue[name] : null;
 
         /// <summary>
         /// Initializes a <see cref="Value"/> with type of <see cref="ValueType.OBJECT"/>.
@@ -257,14 +270,14 @@ namespace DataUtilities.ReadableFileFormat
             return ObjectValue.Remove(name);
         }
 
-        string GetDebuggerDisplay() => Type switch
+        readonly string GetDebuggerDisplay() => Type switch
         {
             ValueType.OBJECT => "{ . }",
             ValueType.LITERAL => LiteralValue,
             _ => ToString(),
         };
 
-        public T Reference<T>(Dictionary<string, T> map)
+        public readonly T Reference<T>(Dictionary<string, T> map)
         {
             if (LiteralValue == null) return default;
             if (map.ContainsKey(LiteralValue)) return map[LiteralValue];
@@ -275,7 +288,7 @@ namespace DataUtilities.ReadableFileFormat
         /// <summary>
         /// Converts the object value to a dictionary where the <c>Key</c> is the name of the child node and <c>Value</c> is the child node.
         /// </summary>
-        public Dictionary<string, Value> Dictionary()
+        public readonly Dictionary<string, Value> Dictionary()
         {
             Dictionary<string, Value> result = new();
             foreach (var pair in ObjectValue)
@@ -286,8 +299,8 @@ namespace DataUtilities.ReadableFileFormat
         /// <summary>
         /// Converts the node to its text equivalent. The result can be parsed back to <see cref="Value"/> with the <see cref="Parser"/>
         /// </summary>
-        public string ToSDF(bool minimal = false) => ToSDF(minimal, 0);
-        string ToSDF(bool minimal, int indent)
+        public readonly string ToSDF(bool minimal = false) => ToSDF(minimal, 0);
+        readonly string ToSDF(bool minimal, int indent)
         {
             string result = "";
 
@@ -365,8 +378,8 @@ namespace DataUtilities.ReadableFileFormat
         /// <summary>
         /// Converts the node to json. The result can be parsed back to <see cref="Value"/> with the <see cref="Json.Parser"/>
         /// </summary>
-        public string ToJSON(bool minimal = false) => ToJSON(minimal, 0);
-        string ToJSON(bool minimal, int indent)
+        public readonly string ToJSON(bool minimal = false) => ToJSON(minimal, 0);
+        readonly string ToJSON(bool minimal, int indent)
         {
             string result = "";
 
@@ -443,12 +456,12 @@ namespace DataUtilities.ReadableFileFormat
             return result;
         }
 
-        public override bool Equals(object obj)
+        public override readonly bool Equals(object obj)
         {
             if (obj is not Value other) return false;
             return Equals(other);
         }
-        public bool Equals(Value obj)
+        readonly public bool Equals(Value obj)
         {
             if (obj.Type != Type) return false;
             switch (Type)
@@ -568,10 +581,10 @@ namespace DataUtilities.ReadableFileFormat
 
         public Location Location
         {
-            get => _location;
+            readonly get => _location;
             internal set => _location = value;
         }
-        public IReadOnlyCollection<string> ChildNames
+        public readonly IReadOnlyCollection<string> ChildNames
         {
             get
             {
@@ -583,7 +596,7 @@ namespace DataUtilities.ReadableFileFormat
 
         Location _location;
 
-        public T Deserialize<T>() where T : IDeserializableText
+        public readonly T Deserialize<T>() where T : IDeserializableText
         {
             IDeserializableText instance = (IDeserializableText)System.Activator.CreateInstance(typeof(T));
             instance.DeserializeText(this);
