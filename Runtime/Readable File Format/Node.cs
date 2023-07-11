@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Linq;
 
 #if UNITY
 using Debug = UnityEngine.Debug;
@@ -102,20 +103,23 @@ namespace DataUtilities.ReadableFileFormat
             }
         }
         /// <summary>
-        /// Returns the array equivalent of the object value, or null if the node has no child named "Length", or an IndexOutOfRange exception occur.
+        /// Returns the array equivalent of the object value.
         /// </summary>
         public readonly Value[] Array
         {
             get
             {
-                if (!TryGetNode("Length", out Value length)) return null;
-                var lengthInt = length.Int ?? 0;
-                Value[] result = new Value[lengthInt];
-                for (int i = 0; i < lengthInt; i++)
+                Value[] result = new Value[ObjectValue.Count];
+                var childNames = ObjectValue.Keys.ToArray();
+                int j = 0;
+                for (int i = 0; i < childNames.Length; i++)
                 {
-                    if (!TryGetNode(i.ToString(), out Value element)) return null;
-                    result[i] = element;
+                    if (!int.TryParse(childNames[i], out int targetI)) return null;
+                    if (targetI < 0 || targetI >= result.Length) return null;
+                    result[targetI] = ObjectValue[childNames[i]];
+                    j++;
                 }
+                if (j != result.Length) return null;
                 return result;
             }
         }
@@ -179,7 +183,6 @@ namespace DataUtilities.ReadableFileFormat
         /// Returns <see langword="true"/> if the object value has a child named <paramref name="name"/>, otherwise <see langword="false"/>.
         /// </summary>
         public readonly bool Has(string name) => ObjectValue != null && ObjectValue.ContainsKey(name);
-        public readonly Value? TryGetNode(string name) => Has(name) ? ObjectValue[name] : null;
 
         /// <summary>
         /// Initializes a <see cref="Value"/> with type of <see cref="ValueType.OBJECT"/>.
@@ -299,8 +302,8 @@ namespace DataUtilities.ReadableFileFormat
         /// <summary>
         /// Converts the node to its text equivalent. The result can be parsed back to <see cref="Value"/> with the <see cref="Parser"/>
         /// </summary>
-        public readonly string ToSDF(bool minimal = false) => ToSDF(minimal, 0);
-        readonly string ToSDF(bool minimal, int indent)
+        public readonly string ToSDF(bool minimal = false) => ToSDF(minimal, 0, true);
+        readonly string ToSDF(bool minimal, int indent, bool isRoot)
         {
             string result = "";
 
@@ -325,23 +328,35 @@ namespace DataUtilities.ReadableFileFormat
                 {
                     if (minimal)
                     {
-                        result += "{";
+                        if (!isRoot) result += "{";
                         foreach (var pair in ObjectValue)
-                        { result += $"{pair.Key}:{pair.Value.ToSDF(minimal, indent + 2)}"; }
-                        result += "}";
+                        { result += $"{pair.Key}:{pair.Value.ToSDF(minimal, indent + 2, false)}"; }
+                        if (!isRoot) result += "}";
                     }
                     else
                     {
                         if (ObjectValue.Count == 0)
                         {
-                            result += "{ }";
+                            if (!isRoot) result += "{ }";
                         }
                         else
                         {
-                            result += "{\r\n";
-                            foreach (var pair in ObjectValue)
-                            { result += "".PadLeft(indent + 2, ' ') + $"{pair.Key}: {pair.Value.ToSDF(minimal, indent + 2)}\r\n"; }
-                            result += "".PadLeft(indent, ' ') + "}";
+                            if (isRoot)
+                            {
+                                foreach (var pair in ObjectValue)
+                                {
+                                    result += $"{pair.Key}: {pair.Value.ToSDF(minimal, indent, false)}\r\n";
+                                }
+                            }
+                            else
+                            {
+                                result += "{\r\n";
+                                foreach (var pair in ObjectValue)
+                                {
+                                    result += "".PadLeft(indent + 2, ' ') + $"{pair.Key}: {pair.Value.ToSDF(minimal, indent + 2, false)}\r\n";
+                                }
+                                result += "".PadLeft(indent, ' ') + "}";
+                            }
                         }
                     }
                 }
@@ -352,7 +367,7 @@ namespace DataUtilities.ReadableFileFormat
                     {
                         result += "[";
                         foreach (var item in arrayValue)
-                        { result += $"{item.ToSDF(minimal, indent + 2)}"; }
+                        { result += $"{item.ToSDF(minimal, indent + 2, false)}"; }
                         result += "]";
                     }
                     else
@@ -365,7 +380,7 @@ namespace DataUtilities.ReadableFileFormat
                         {
                             result += "[\r\n";
                             foreach (var item in arrayValue)
-                            { result += "".PadLeft(indent + 2, ' ') + $"{item.ToSDF(minimal, indent + 2)}\r\n"; }
+                            { result += "".PadLeft(indent + 2, ' ') + $"{item.ToSDF(minimal, indent + 2, false)}\r\n"; }
                             result += "".PadLeft(indent, ' ') + "]";
                         }
                     }
@@ -461,23 +476,23 @@ namespace DataUtilities.ReadableFileFormat
             if (obj is not Value other) return false;
             return Equals(other);
         }
-        readonly public bool Equals(Value obj)
+        readonly public bool Equals(Value other)
         {
-            if (obj.Type != Type) return false;
+            if (other.Type != Type) return false;
             switch (Type)
             {
                 case ValueType.LITERAL:
                     {
-                        return string.Equals(LiteralValue, obj.LiteralValue);
+                        return string.Equals(LiteralValue, other.LiteralValue);
                     }
                 case ValueType.OBJECT:
                     {
                         foreach (var pair in ObjectValue)
                         {
-                            if (!obj.ObjectValue.TryGetValue(pair.Key, out var objValue)) return false;
+                            if (!other.ObjectValue.TryGetValue(pair.Key, out var objValue)) return false;
                             if (!pair.Value.Equals(objValue)) return false;
                         }
-                        foreach (var pair in obj.ObjectValue)
+                        foreach (var pair in other.ObjectValue)
                         {
                             if (!ObjectValue.TryGetValue(pair.Key, out var objValue)) return false;
                             if (!pair.Value.Equals(objValue)) return false;
@@ -491,6 +506,7 @@ namespace DataUtilities.ReadableFileFormat
         public static implicit operator Value(bool v) => Value.Literal(v);
         public static implicit operator Value(int v) => Value.Literal(v);
         public static implicit operator Value(float v) => Value.Literal(v);
+        public static implicit operator Value(string v) => Value.Literal(v);
         public static implicit operator Value(Value[] v)
         {
             Value result = Value.Object();
@@ -499,8 +515,15 @@ namespace DataUtilities.ReadableFileFormat
             { result[i] = v[i]; }
             return result;
         }
+
+        public static implicit operator string(Value v) => v.String;
+        public static implicit operator bool?(Value v) => v.Bool;
+        public static implicit operator int?(Value v) => v.Int;
+        public static implicit operator float?(Value v) => v.Float;
+
         public static bool operator ==(Value left, Value right) => left.Equals(right);
         public static bool operator !=(Value left, Value right) => !(left == right);
+
 
         [System.Flags]
         public enum CombineOptions : ushort

@@ -606,7 +606,7 @@ namespace DataUtilities.Serializer
                     Serialize(v.String);
                     break;
                 case ReadableFileFormat.ValueType.OBJECT:
-                    Serialize(v.Dictionary(), (s, key) => s.Serialize(key, INTEGER_TYPE.INT16), INTEGER_TYPE.INT32);
+                    Serialize(v.Dictionary());
                     break;
                 default:
                     break;

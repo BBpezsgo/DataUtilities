@@ -106,7 +106,8 @@ namespace DataUtilities
             Serializer.Deserializer deserializer = new(System.IO.File.ReadAllBytes(Path + "yeah_sdf.bin"));
             Value loaded_bin = deserializer.DeserializeSdfValue();
 
-            Value loaded_text = Parser.LoadFile(Path + "yeah.sdf").Value;
+            if (!Parser.TryLoadFile(Path + "yeah.sdf", out Value loaded_text))
+            { throw new Exception($"Failed to load the file"); }
 
             // Console.WriteLine(data.ToSDF());
             // Console.WriteLine(loaded_text.ToSDF());

@@ -110,7 +110,6 @@ namespace DataUtilities.ReadableFileFormat
                     ConsumeCharacters(WhitespaceCharacters);
                 }
                 ConsumeNext();
-                objectValue["Length"] = Value.Literal(index.ToString());
                 return objectValue;
             }
 
@@ -151,7 +150,6 @@ namespace DataUtilities.ReadableFileFormat
             return result;
         }
 
-        public static Value? LoadFile(string file) => !File.Exists(file) ? null : new Parser(File.ReadAllText(file))._Parse();
         public static bool TryLoadFile(string file, out Value result)
         {
             if (!File.Exists(file))

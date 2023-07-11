@@ -184,7 +184,6 @@ namespace DataUtilities.Json
             throw new JsonSyntaxException($"Unexpected character '{CurrentCharacter}'; expected property name");
         }
 
-        public static Value? LoadFile(string file) => !File.Exists(file) ? null : new Parser(File.ReadAllText(file)).ExpectRootValue();
         public static bool TryLoadFile(string file, out Value result)
         {
             if (!File.Exists(file))
