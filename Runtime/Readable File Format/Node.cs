@@ -36,7 +36,7 @@ namespace DataUtilities.ReadableFileFormat
 
         internal string[] path;
 
-        public string Path => path == null ? null : string.Join('/', path);
+        public readonly string Path => path == null ? null : string.Join('/', path);
 
         internal Value(string[] path)
         {
@@ -170,7 +170,7 @@ namespace DataUtilities.ReadableFileFormat
 
         public Value this[int name]
         {
-            get => this[name.ToString()];
+            readonly get => this[name.ToString()];
             set => this[name.ToString()] = value;
         }
 
