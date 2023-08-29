@@ -620,10 +620,12 @@ namespace DataUtilities.ReadableFileFormat
         Location _location;
 
         public readonly T Deserialize<T>() where T : IDeserializableText
+            => this.Deserialize<T>((T)System.Activator.CreateInstance(typeof(T)));
+
+        public readonly T Deserialize<T>(T instance) where T : IDeserializableText
         {
-            IDeserializableText instance = (IDeserializableText)System.Activator.CreateInstance(typeof(T));
             instance.DeserializeText(this);
-            return (T)instance;
+            return instance;
         }
     }
 
