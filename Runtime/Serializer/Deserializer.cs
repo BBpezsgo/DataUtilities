@@ -62,6 +62,18 @@ namespace DataUtilities.Serializer
             return ((TypeDeserializer<T>)method).Invoke;
         }
 
+        bool TryGetDeserializerForType<T>(out Func<T> deserializer)
+        {
+            if (!typeDeserializers.TryGetValue(typeof(T), out Delegate method))
+            {
+                deserializer = null;
+                return false;
+            }
+
+            deserializer = ((TypeDeserializer<T>)method).Invoke;
+            return true;
+        }
+
         #region Generic Types
 
         // --- 1 byte ---
@@ -418,19 +430,21 @@ namespace DataUtilities.Serializer
         /// <typeparam name="T">
         /// The following data type.<br/>
         /// This must be one of the following:<br/>
-        /// <see cref="byte"/>,
-        /// <see cref="bool"/>,
-        /// <see cref="short"/>,
-        /// <see cref="ushort"/>,
-        /// <see cref="char"/>,
-        /// <see cref="Half"/>,
-        /// <see cref="int"/>,
-        /// <see cref="uint"/>,
-        /// <see cref="float"/>,
-        /// <see cref="double"/>,
-        /// <see cref="long"/>,
-        /// <see cref="ulong"/>,
-        /// <see cref="string"/>,
+        /// <see cref="System.Byte"/>,
+        /// <see cref="System.Boolean"/>,
+        /// <see cref="System.Int16"/>,
+        /// <see cref="System.UInt16"/>,
+        /// <see cref="System.Char"/>,
+        /// <see cref="System.Int32"/>,
+        /// <see cref="System.UInt32"/>,
+        /// <see cref="System.Int64"/>,
+        /// <see cref="System.UInt64"/>,
+        /// 
+        /// <see cref="System.Half"/>,
+        /// <see cref="System.Single"/>,
+        /// <see cref="System.Double"/>,
+        /// 
+        /// <see cref="System.String"/>,
         /// <see cref="ReadableFileFormat.Value"/>
         /// </typeparam>
         /// <returns>The deserialized data whose type is <typeparamref name="T"/>.</returns>

@@ -145,6 +145,20 @@ namespace DataUtilities.ReadableFileFormat
             }
         }
 
+        public readonly TEnum Enum<TEnum>() where TEnum : struct
+        {
+            if (string.IsNullOrWhiteSpace(LiteralValue)) throw new System.Exception($"Can not convert \"{LiteralValue}\" to {typeof(TEnum)}");
+            if (!System.Enum.TryParse(LiteralValue, out TEnum result)) throw new System.Exception($"Can not convert \"{LiteralValue}\" to {typeof(TEnum)}");
+            return result;
+        }
+
+        public readonly TEnum Enum<TEnum>(TEnum @default) where TEnum : struct
+        {
+            if (string.IsNullOrWhiteSpace(LiteralValue)) return @default;
+            if (!System.Enum.TryParse(LiteralValue, out TEnum result)) return @default;
+            return result;
+        }
+
         public Value this[string name]
         {
             readonly get
@@ -619,14 +633,13 @@ namespace DataUtilities.ReadableFileFormat
 
         Location _location;
 
-        public readonly T Deserialize<T>() where T : IDeserializableText
-            => this.Deserialize<T>((T)System.Activator.CreateInstance(typeof(T)));
+        public readonly T Object<T>() where T : IDeserializableText
+            => this.Object((T)System.Activator.CreateInstance(typeof(T)));
 
-        public readonly T Deserialize<T>(T instance) where T : IDeserializableText
+        public readonly T Object<T>(T instance) where T : IDeserializableText
         {
             instance.DeserializeText(this);
             return instance;
         }
     }
-
 }
