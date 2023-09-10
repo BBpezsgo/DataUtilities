@@ -177,7 +177,11 @@ namespace DataUtilities.ReadableFileFormat
         {
             get
             {
-                foreach (var name in names) if (Has(name)) return ObjectValue[name];
+                foreach (string name in names)
+                {
+                    if (Has(name))
+                    { return ObjectValue[name]; }
+                }
                 return Value.Literal(null);
             }
         }
