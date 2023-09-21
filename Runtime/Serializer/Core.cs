@@ -26,8 +26,6 @@ namespace DataUtilities.Serializer
         /// <summary>
         /// Returns a specified section of the array
         /// </summary>
-        /// <typeparam name="T">The type of the elements of the array</typeparam>
-        /// <param name="array">The array</param>
         /// <param name="startIndex">The index where the section starts (inclusive)</param>
         /// <param name="length">The length of the section</param>
         internal static T[] Get<T>(this T[] array, int startIndex, int length)

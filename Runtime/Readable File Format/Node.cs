@@ -14,17 +14,13 @@ namespace DataUtilities.ReadableFileFormat
         /// </summary>
         LITERAL,
         /// <summary>
-        /// A complex data type with child fields.
+        /// A data type with child fields.
         /// </summary>
         OBJECT,
     }
 
     [System.Diagnostics.DebuggerDisplay("{" + nameof(GetDebuggerDisplay) + "(),nq}")]
-#pragma warning disable CS0659
-#pragma warning disable CS0661
-    public struct Value
-#pragma warning restore CS0661
-#pragma warning restore CS0659
+    public struct Value : System.IEquatable<Value>
     {
         /// <summary>
         /// The type of this node.
@@ -494,7 +490,7 @@ namespace DataUtilities.ReadableFileFormat
             if (obj is not Value other) return false;
             return Equals(other);
         }
-        readonly public bool Equals(Value other)
+        public readonly bool Equals(Value other)
         {
             if (other.Type != Type) return false;
             switch (Type)
@@ -645,5 +641,12 @@ namespace DataUtilities.ReadableFileFormat
             instance.DeserializeText(this);
             return instance;
         }
+
+        public override readonly int GetHashCode() => Type switch
+        {
+            ValueType.LITERAL => System.HashCode.Combine(Type, LiteralValue),
+            ValueType.OBJECT => System.HashCode.Combine(Type, ObjectValue),
+            _ => System.HashCode.Combine(Type, LiteralValue, ObjectValue),
+        };
     }
 }
