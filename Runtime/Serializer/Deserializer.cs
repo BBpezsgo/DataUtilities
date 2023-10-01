@@ -13,6 +13,8 @@ namespace DataUtilities.Serializer
         byte[] data = Array.Empty<byte>();
         int currentIndex;
 
+        public bool HasData => currentIndex < data.Length - 1;
+
         readonly Dictionary<Type, Delegate> typeDeserializers;
 
         delegate T TypeDeserializer<T>();
@@ -48,6 +50,8 @@ namespace DataUtilities.Serializer
 
             Reinitialize(data);
         }
+
+        public byte Peek() => data[currentIndex];
 
         public void Reinitialize(byte[] data)
         {
