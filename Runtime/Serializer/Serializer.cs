@@ -231,7 +231,7 @@ namespace DataUtilities.Serializer
         /// <summary>
         /// Serializes the given object <typeparamref name="T"/> with the <see cref="ISerializable{T}.Serialize(Serializer)"/> method.
         /// </summary>
-        public void Serialize<T>(ISerializable<T> v) where T : ISerializable<T> => v.Serialize(this);
+        public void Serialize<T>(ISerializable<T> v) => v.Serialize(this);
 
         /// <summary>
         /// Serializes the given object <typeparamref name="T"/> with the <paramref name="callback"/> function.
