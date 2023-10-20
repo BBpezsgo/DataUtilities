@@ -3,7 +3,7 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.4.33213.308
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Data Utilities", "Data Utilities.csproj", "{94ED7A8A-8BE0-4F40-AA19-26A59248DA04}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Data Utilities", "DataUtilities.csproj", "{94ED7A8A-8BE0-4F40-AA19-26A59248DA04}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
