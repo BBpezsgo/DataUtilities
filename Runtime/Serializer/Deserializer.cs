@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 
 namespace DataUtilities.Serializer
 {
@@ -61,14 +62,14 @@ namespace DataUtilities.Serializer
 
         Func<T> GetDeserializerForType<T>()
         {
-            if (!typeDeserializers.TryGetValue(typeof(T), out Delegate method))
+            if (!typeDeserializers.TryGetValue(typeof(T), out Delegate? method))
             { throw new NotImplementedException($"Deserializer for type {typeof(T)} not found"); }
             return ((TypeDeserializer<T>)method).Invoke;
         }
 
-        bool TryGetDeserializerForType<T>(out Func<T> deserializer)
+        bool TryGetDeserializerForType<T>([NotNullWhen(true)] out Func<T>? deserializer)
         {
-            if (!typeDeserializers.TryGetValue(typeof(T), out Delegate method))
+            if (!typeDeserializers.TryGetValue(typeof(T), out Delegate? method))
             {
                 deserializer = null;
                 return false;
@@ -226,11 +227,11 @@ namespace DataUtilities.Serializer
         /// <summary>
         /// Deserializes the following <see cref="System.String"/> data. Length and encoding are obtained automatically.
         /// </summary>
-        public string DeserializeString() => DeserializeString(INTEGER_TYPE.INT32);
+        public string? DeserializeString() => DeserializeString(INTEGER_TYPE.INT32);
         /// <summary>
         /// Deserializes the following <see cref="System.String"/> data. Length and encoding are obtained automatically.
         /// </summary>
-        public string DeserializeString(INTEGER_TYPE length)
+        public string? DeserializeString(INTEGER_TYPE length)
         {
             int _length = DeserializeArrayLength(length);
             if (_length == -1) return null;
@@ -265,9 +266,11 @@ namespace DataUtilities.Serializer
         /// Deserializes the following <typeparamref name="T"/> data.<br/>
         /// This creates an instance of <typeparamref name="T"/> and then calls the <see cref="ISerializable{T}.Deserialize(Deserializer)"/> method on the instance.
         /// </summary>
+        /// <exception cref="NullReferenceException"/>
         public T DeserializeObject<T>() where T : ISerializable<T>
         {
-            var instance = (ISerializable<T>)Activator.CreateInstance(typeof(T));
+            object instanceObj = Activator.CreateInstance(typeof(T)) ?? throw new NullReferenceException();
+            ISerializable<T> instance = (ISerializable<T>)instanceObj;
             instance.Deserialize(this);
             return (T)instance;
         }
@@ -347,7 +350,7 @@ namespace DataUtilities.Serializer
 
         #region Dictionaries
 
-        public Dictionary<TKey, TValue> DeserializeDictionary<TKey, TValue>(INTEGER_TYPE length = INTEGER_TYPE.INT32)
+        public Dictionary<TKey, TValue>? DeserializeDictionary<TKey, TValue>(INTEGER_TYPE length = INTEGER_TYPE.INT32) where TKey : notnull
         {
             int _length = DeserializeArrayLength(length);
             if (_length == -1) return null;
@@ -363,7 +366,7 @@ namespace DataUtilities.Serializer
             return result;
         }
 
-        public Dictionary<TKey, TValue> DeserializeDictionary<TKey, TValue>(Func<Deserializer, TKey> keyDeserializer, INTEGER_TYPE length = INTEGER_TYPE.INT32)
+        public Dictionary<TKey, TValue>? DeserializeDictionary<TKey, TValue>(Func<Deserializer, TKey> keyDeserializer, INTEGER_TYPE length = INTEGER_TYPE.INT32) where TKey : notnull
         {
             int _length = DeserializeArrayLength(length);
             if (_length == -1) return null;
@@ -379,7 +382,7 @@ namespace DataUtilities.Serializer
             return result;
         }
 
-        public Dictionary<TKey, TValue> DeserializeDictionary<TKey, TValue>(Func<Deserializer, TValue> valueDeserializer, INTEGER_TYPE length = INTEGER_TYPE.INT32)
+        public Dictionary<TKey, TValue>? DeserializeDictionary<TKey, TValue>(Func<Deserializer, TValue> valueDeserializer, INTEGER_TYPE length = INTEGER_TYPE.INT32) where TKey : notnull
         {
             int _length = DeserializeArrayLength(length);
             if (_length == -1) return null;
@@ -395,7 +398,7 @@ namespace DataUtilities.Serializer
             return result;
         }
 
-        public Dictionary<TKey, TValue> DeserializeDictionary<TKey, TValue>(Func<Deserializer, TKey> keyDeserializer, Func<Deserializer, TValue> valueDeserializer, INTEGER_TYPE length = INTEGER_TYPE.INT32)
+        public Dictionary<TKey, TValue>? DeserializeDictionary<TKey, TValue>(Func<Deserializer, TKey> keyDeserializer, Func<Deserializer, TValue> valueDeserializer, INTEGER_TYPE length = INTEGER_TYPE.INT32) where TKey : notnull
         {
             int _length = DeserializeArrayLength(length);
             if (_length == -1) return null;
@@ -415,13 +418,14 @@ namespace DataUtilities.Serializer
 
         #region ReadableFileFormat.Value
 
+        /// <exception cref="NullReferenceException"/>
         public ReadableFileFormat.Value DeserializeSdfValue()
         {
             ReadableFileFormat.ValueType type = (ReadableFileFormat.ValueType)DeserializeByte();
             return type switch
             {
                 ReadableFileFormat.ValueType.LITERAL => ReadableFileFormat.Value.Literal(DeserializeString()),
-                ReadableFileFormat.ValueType.OBJECT => ReadableFileFormat.Value.Object(DeserializeDictionary<string, ReadableFileFormat.Value>(s => s.DeserializeString(INTEGER_TYPE.INT16))),
+                ReadableFileFormat.ValueType.OBJECT => ReadableFileFormat.Value.Object(DeserializeDictionary<string, ReadableFileFormat.Value>(s => s.DeserializeString(INTEGER_TYPE.INT16) ?? throw new NullReferenceException())),
                 _ => throw new Exception("WTF"),
             };
         }

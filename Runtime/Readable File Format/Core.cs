@@ -43,7 +43,8 @@ namespace DataUtilities.ReadableFileFormat
             T[] result = new T[self.Length];
             for (int i = 0; i < result.Length; i++)
             {
-                IDeserializableText instance = (IDeserializableText)System.Activator.CreateInstance(typeof(T));
+                object instanceObj = System.Activator.CreateInstance(typeof(T)) ?? throw new System.NullReferenceException();
+                IDeserializableText instance = (IDeserializableText)instanceObj;
                 instance.DeserializeText(self[i]);
                 result[i] = (T)instance;
             }
@@ -60,13 +61,13 @@ namespace DataUtilities.ReadableFileFormat
         static readonly Dictionary<System.Type, System.Delegate> converters = new()
         {
             { typeof(int), (System.Func<Value, int>)(v => v.Int ?? 0) },
-            { typeof(string), (System.Func<Value, string>)(v => v.String) },
+            { typeof(string), (System.Func<Value, string?>)(v => v.String) },
             { typeof(bool), (System.Func<Value, bool>)(v => v.Bool ?? false) },
             { typeof(float), (System.Func<Value, float>)(v => v.Float ?? 0f) },
         };
         public static T[] ConvertPrimitive<T>(this Value[] self)
         {
-            if (!converters.TryGetValue(typeof(T), out System.Delegate _converter))
+            if (!converters.TryGetValue(typeof(T), out System.Delegate? _converter))
             { throw new System.NotImplementedException($"Converter for type {typeof(T)} not implemented"); }
 
             System.Func<Value, T> converter = (System.Func<Value, T>)_converter;
@@ -82,7 +83,6 @@ namespace DataUtilities.ReadableFileFormat
             { result.Add(pair.Key, converter.Invoke(pair.Value)); }
             return result;
         }
-#nullable enable
         public static Dictionary<string, T> ConvertNotAll<T>(this Dictionary<string, Value> self, System.Func<Value, T?> converter)
         {
             Dictionary<string, T> result = new();
@@ -93,6 +93,5 @@ namespace DataUtilities.ReadableFileFormat
             }
             return result;
         }
-#nullable disable
     }
 }

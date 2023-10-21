@@ -36,7 +36,7 @@ namespace DataUtilities.Serializer
             return result.ToArray();
         }
 
-        internal static Dictionary<TKey, TValue> ToDictionary<TKey, TValue>(this IEnumerable<KeyValuePair<TKey, TValue>> v) => v.ToDictionary(x => x.Key, x => x.Value);
+        internal static Dictionary<TKey, TValue> ToDictionary<TKey, TValue>(this IEnumerable<KeyValuePair<TKey, TValue>> v) where TKey : notnull => v.ToDictionary(x => x.Key, x => x.Value);
     }
 
     /// <summary>

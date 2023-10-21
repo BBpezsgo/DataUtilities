@@ -51,7 +51,7 @@ namespace DataUtilities.Serializer
         /// <exception cref="NotImplementedException"></exception>
         TypeSerializer<T> GetSerializerForType<T>()
         {
-            if (!typeSerializers.TryGetValue(typeof(T), out Delegate method))
+            if (!typeSerializers.TryGetValue(typeof(T), out Delegate? method))
             { throw new NotImplementedException($"Serializer for type {typeof(T)} not found"); }
             return (TypeSerializer<T>)method;
         }
@@ -190,11 +190,11 @@ namespace DataUtilities.Serializer
         /// <summary>
         /// Serializes the given <see cref="string"/>. Both the length and the encoding will be serialized.
         /// </summary>
-        public void Serialize(string v) => Serialize(v, INTEGER_TYPE.INT32);
+        public void Serialize(string? v) => Serialize(v, INTEGER_TYPE.INT32);
         /// <summary>
         /// Serializes the given <see cref="string"/>. Both the length and the encoding will be serialized.
         /// </summary>
-        public void Serialize(string v, INTEGER_TYPE length)
+        public void Serialize(string? v, INTEGER_TYPE length)
         {
             if (v == null)
             {
@@ -493,7 +493,7 @@ namespace DataUtilities.Serializer
         /// </typeparam>
         /// <exception cref="TooSmallUnitException"></exception>
         /// <exception cref="NotImplementedException"></exception>
-        public void Serialize<TKey, TValue>(Dictionary<TKey, TValue> v, INTEGER_TYPE length = INTEGER_TYPE.INT32)
+        public void Serialize<TKey, TValue>(Dictionary<TKey, TValue> v, INTEGER_TYPE length = INTEGER_TYPE.INT32) where TKey : notnull
         {
             if (v.Count == 0) { Serialize(-1); return; }
 
@@ -528,7 +528,7 @@ namespace DataUtilities.Serializer
         /// </typeparam>
         /// <exception cref="TooSmallUnitException"></exception>
         /// <exception cref="NotImplementedException"></exception>
-        public void Serialize<TKey, TValue>(Dictionary<TKey, TValue> v, Action<Serializer, TValue> valueSerializer, INTEGER_TYPE length = INTEGER_TYPE.INT32)
+        public void Serialize<TKey, TValue>(Dictionary<TKey, TValue> v, Action<Serializer, TValue> valueSerializer, INTEGER_TYPE length = INTEGER_TYPE.INT32) where TKey : notnull
         {
             if (v.Count == 0) { Serialize(-1); return; }
 
@@ -562,7 +562,7 @@ namespace DataUtilities.Serializer
         /// </typeparam>
         /// <exception cref="TooSmallUnitException"></exception>
         /// <exception cref="NotImplementedException"></exception>
-        public void Serialize<TKey, TValue>(Dictionary<TKey, TValue> v, Action<Serializer, TKey> keySerializer, INTEGER_TYPE length = INTEGER_TYPE.INT32)
+        public void Serialize<TKey, TValue>(Dictionary<TKey, TValue> v, Action<Serializer, TKey> keySerializer, INTEGER_TYPE length = INTEGER_TYPE.INT32) where TKey : notnull
         {
             if (v.Count == 0) { Serialize(-1); return; }
 
@@ -579,7 +579,7 @@ namespace DataUtilities.Serializer
 
         /// <exception cref="TooSmallUnitException"></exception>
         /// <exception cref="NotImplementedException"></exception>
-        public void Serialize<TKey, TValue>(Dictionary<TKey, TValue> v, Action<Serializer, TKey> keySerializer, Action<Serializer, TValue> valueSerializer, INTEGER_TYPE length = INTEGER_TYPE.INT32)
+        public void Serialize<TKey, TValue>(Dictionary<TKey, TValue> v, Action<Serializer, TKey> keySerializer, Action<Serializer, TValue> valueSerializer, INTEGER_TYPE length = INTEGER_TYPE.INT32) where TKey : notnull
         {
             if (v.Count == 0) { Serialize(-1); return; }
 

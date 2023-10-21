@@ -116,49 +116,58 @@ namespace DataUtilities.FilePacker
             serializer.Serialize(files, SerializeFile, INTEGER_TYPE.INT32);
         }
 
+        /// <exception cref="System.NullReferenceException"/>
         void SerializeFolder(Serializer.Serializer serializer, IFolder folder)
         {
             serializer.Serialize((byte)ThingType.UserDefined);
-            serializer.Serialize(folder.Name);
+            serializer.Serialize(folder.Name!);
 
             PackFolder(serializer, folder);
         }
+        /// <exception cref="System.NullReferenceException"/>
         void SerializeFile(Serializer.Serializer serializer, IFile file)
         {
             serializer.Serialize((byte)ThingType.UserDefined);
-            serializer.Serialize(file.Name);
+            serializer.Serialize(file.Name!);
             serializer.Serialize(File.ReadAllBytes(file.FullName));
         }
     }
 
     public class Unpacker
     {
-        readonly Stack<DirectoryInfo> folderStack = new();
-        PackHeader Header;
+        readonly Stack<DirectoryInfo> FolderStack = new();
+        readonly PackHeader Header;
 
-        string CurrentPath => folderStack.Peek().FullName;
+        public Unpacker(Stack<DirectoryInfo> folderStack, PackHeader header)
+        {
+            this.FolderStack = folderStack;
+            Header = header;
+        }
 
+        string CurrentPath => FolderStack.Peek().FullName;
+
+        /// <exception cref="System.NullReferenceException"/>
         public static void Unpack(string file)
         {
             FileInfo fileInfo = new(file);
 
-            string rootPath = Path.Combine(fileInfo.DirectoryName, fileInfo.Name[..^fileInfo.Extension.Length]);
+            string rootPath = Path.Combine(fileInfo.DirectoryName!, fileInfo.Name[..^fileInfo.Extension.Length]);
 
             Unpack(fileInfo.FullName, rootPath);
         }
         public static void Unpack(string file, string output)
         {
-            Unpacker unpacker = new();
+            Stack<DirectoryInfo> folderStack = new();
 
             FileInfo fileInfo = new(file);
 
             if (!Directory.Exists(output))
-            { unpacker.folderStack.Push(Directory.CreateDirectory(output)); }
+            { folderStack.Push(Directory.CreateDirectory(output)); }
             else
-            { unpacker.folderStack.Push(new DirectoryInfo(output)); }
+            { folderStack.Push(new DirectoryInfo(output)); }
             Deserializer deserializer = new(File.ReadAllBytes(fileInfo.FullName));
 
-            unpacker.Header = deserializer.DeserializeObject<PackHeader>();
+            Unpacker unpacker = new(folderStack, deserializer.DeserializeObject<PackHeader>());
 
             unpacker.UnpackFolder(deserializer);
         }
@@ -168,11 +177,12 @@ namespace DataUtilities.FilePacker
             deserializer.DeserializeArray(DeserializeFile, INTEGER_TYPE.INT32);
         }
 
+        /// <exception cref="System.NullReferenceException"/>
         DirectoryInfo DeserializeFolder(Deserializer deserializer)
         {
             ThingType thingType = (ThingType)deserializer.DeserializeByte();
 
-            string name = deserializer.DeserializeString();
+            string name = deserializer.DeserializeString()!;
             DirectoryInfo folder = Directory.CreateDirectory(Path.Combine(CurrentPath, name));
 
             if (thingType == ThingType.Real && Header.SaveMetadata)
@@ -183,16 +193,17 @@ namespace DataUtilities.FilePacker
                 folder.LastWriteTimeUtc = new System.DateTime(deserializer.DeserializeInt64());
             }
 
-            folderStack.Push(folder);
+            FolderStack.Push(folder);
             UnpackFolder(deserializer);
-            folderStack.Pop();
+            FolderStack.Pop();
             return folder;
         }
+        /// <exception cref="System.NullReferenceException"/>
         FileInfo DeserializeFile(Deserializer deserializer)
         {
             ThingType thingType = (ThingType)deserializer.DeserializeByte();
 
-            string name = deserializer.DeserializeString();
+            string name = deserializer.DeserializeString()!;
             byte[] content = deserializer.DeserializeArray<byte>(INTEGER_TYPE.INT32);
             string path = Path.Combine(CurrentPath, name);
 
@@ -215,16 +226,16 @@ namespace DataUtilities.FilePacker
 
     public interface IFileOrFolder
     {
-        public string Name { get; }
+        public string? Name { get; }
         public string FullName { get; }
     }
 
     public class VirtualThing
     {
-        internal VirtualFolder Parent;
-        protected string name;
+        internal VirtualFolder? Parent;
+        protected string? name;
 
-        public override string ToString() => name;
+        public override string? ToString() => name;
     }
 
     public interface IFile : IFileOrFolder
@@ -247,10 +258,11 @@ namespace DataUtilities.FilePacker
         /// <param name="str">The string.</param>
         /// <param name="pattern">The pattern to match, where "*" means any sequence of characters, and "?" means any single character.</param>
         /// <returns><c>true</c> if the string matches the given pattern; otherwise <c>false</c>.</returns>
+        /// <exception cref="System.NullReferenceException"/>
         public static bool Like(this IFileOrFolder self, string pattern) => new System.Text.RegularExpressions.Regex(
                 "^" + System.Text.RegularExpressions.Regex.Escape(pattern).Replace(@"\*", ".*").Replace(@"\?", ".") + "$",
                 System.Text.RegularExpressions.RegexOptions.IgnoreCase | System.Text.RegularExpressions.RegexOptions.Singleline
-            ).IsMatch(self.Name);
+            ).IsMatch(self.Name!);
     }
 
     public class VirtualFile : VirtualThing, IFile
@@ -259,8 +271,8 @@ namespace DataUtilities.FilePacker
 
         public byte[] Bytes => content;
         public string Text => System.Text.Encoding.UTF8.GetString(content);
-        public string FullName => (Parent == null) ? name : (Parent.FullName + '\\' + name);
-        public string Name { get => name; set => name = value; }
+        public string FullName => (Parent == null) ? (name ?? string.Empty) : (Parent.FullName + '\\' + name);
+        public string? Name { get => name; set => name = value; }
 
         public VirtualFile(string name, byte[] content)
         {
@@ -296,22 +308,22 @@ namespace DataUtilities.FilePacker
         public IEnumerable<IFolder> Folders => folders;
 
         public string FullName => (Parent == null) ? (name ?? "") : (Parent.FullName + '\\' + name);
-        public string Name => name;
+        public string? Name => name;
 
-        public VirtualThing this[string name] => (VirtualThing)GetFolder(name) ?? (VirtualThing)GetFile(name);
+        public VirtualThing? this[string name] => (VirtualThing?)GetFolder(name) ?? (VirtualThing?)GetFile(name);
 
-        public VirtualFolder(string name)
+        public VirtualFolder(string? name)
         {
             this.name = name;
         }
 
-        public VirtualFile GetFile(string name)
+        public VirtualFile? GetFile(string name)
         {
             for (int i = 0; i < files.Count; i++)
             { if (files[i].Name == name) return files[i]; }
             return null;
         }
-        public VirtualFolder GetFolder(string name)
+        public VirtualFolder? GetFolder(string name)
         {
             for (int i = 0; i < folders.Count; i++)
             { if (folders[i].name == name) return folders[i]; }
@@ -337,33 +349,40 @@ namespace DataUtilities.FilePacker
 
     public class VirtualUnpacker
     {
-        readonly Stack<VirtualFolder> folderStack = new();
-        PackHeader Header;
+        readonly Stack<VirtualFolder> FolderStack = new();
+        readonly PackHeader Header;
+
+        public VirtualUnpacker(Stack<VirtualFolder> folderStack, PackHeader header)
+        {
+            FolderStack = folderStack;
+            Header = header;
+        }
 
         public static VirtualFolder Unpack(string file) => Unpack(File.ReadAllBytes(file));
         public static VirtualFolder Unpack(byte[] data)
         {
-            VirtualUnpacker unpacker = new();
+            Stack<VirtualFolder> folderStack = new();
 
-            unpacker.folderStack.Push(new VirtualFolder(null));
+            folderStack.Push(new VirtualFolder(null));
             Deserializer deserializer = new(data);
 
-            unpacker.Header = deserializer.DeserializeObject<PackHeader>();
+            VirtualUnpacker unpacker = new(folderStack, deserializer.DeserializeObject<PackHeader>());
 
             unpacker.UnpackFolder(deserializer);
 
-            return unpacker.folderStack.Pop();
+            return unpacker.FolderStack.Pop();
         }
         void UnpackFolder(Deserializer deserializer)
         {
-            folderStack.Peek().AddFolders(deserializer.DeserializeArray(DeserializeFolder, INTEGER_TYPE.INT32));
-            folderStack.Peek().AddFiles(deserializer.DeserializeArray(DeserializeFile, INTEGER_TYPE.INT32));
+            FolderStack.Peek().AddFolders(deserializer.DeserializeArray(DeserializeFolder, INTEGER_TYPE.INT32));
+            FolderStack.Peek().AddFiles(deserializer.DeserializeArray(DeserializeFile, INTEGER_TYPE.INT32));
         }
 
+        /// <exception cref="System.NullReferenceException"/>
         VirtualFolder DeserializeFolder(Deserializer deserializer)
         {
             ThingType thingType = (ThingType)deserializer.DeserializeByte();
-            string name = deserializer.DeserializeString();
+            string name = deserializer.DeserializeString()!;
             VirtualFolder folder = new(name);
 
             if (thingType == ThingType.Real && Header.SaveMetadata)
@@ -374,15 +393,16 @@ namespace DataUtilities.FilePacker
                 deserializer.DeserializeInt64();
             }
 
-            folderStack.Push(folder);
+            FolderStack.Push(folder);
             UnpackFolder(deserializer);
-            folderStack.Pop();
+            FolderStack.Pop();
             return folder;
         }
+        /// <exception cref="System.NullReferenceException"/>
         VirtualFile DeserializeFile(Deserializer deserializer)
         {
             ThingType thingType = (ThingType)deserializer.DeserializeByte();
-            string name = deserializer.DeserializeString();
+            string name = deserializer.DeserializeString()!;
             byte[] content = deserializer.DeserializeArray<byte>(INTEGER_TYPE.INT32);
 
             if (thingType == ThingType.Real && Header.SaveMetadata)

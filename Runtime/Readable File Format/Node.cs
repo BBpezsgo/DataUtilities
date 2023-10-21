@@ -27,12 +27,12 @@ namespace DataUtilities.ReadableFileFormat
         /// </summary>
         public ValueType Type;
 
-        string LiteralValue;
-        Dictionary<string, Value> ObjectValue;
+        string? LiteralValue;
+        Dictionary<string, Value>? ObjectValue;
 
         internal string[] path;
 
-        public readonly string Path => path == null ? null : string.Join('/', path);
+        public readonly string? Path => path == null ? null : string.Join('/', path);
 
         internal Value(string[] path)
         {
@@ -46,7 +46,7 @@ namespace DataUtilities.ReadableFileFormat
         /// <summary>
         /// Returns the raw literal value, or <see langword="null"/> if none.
         /// </summary>
-        public readonly string String => LiteralValue ?? null;
+        public readonly string? String => LiteralValue ?? null;
         /// <summary>
         /// Returns the <see cref="float"/> literal value, or <see langword="null"/> if the literal value cannot be parsed to a <see cref="float"/> value.
         /// </summary>
@@ -101,10 +101,11 @@ namespace DataUtilities.ReadableFileFormat
         /// <summary>
         /// Returns the array equivalent of the object value.
         /// </summary>
-        public readonly Value[] Array
+        public readonly Value[]? Array
         {
             get
             {
+                if (ObjectValue == null) return null;
                 Value[] result = new Value[ObjectValue.Count];
                 var childNames = ObjectValue.Keys.ToArray();
                 int j = 0;
@@ -136,7 +137,7 @@ namespace DataUtilities.ReadableFileFormat
             {
                 if (IsNull) return true;
                 if (Type == ValueType.LITERAL) return string.IsNullOrEmpty(LiteralValue);
-                if (Type == ValueType.OBJECT) return ObjectValue.Count == 0;
+                if (Type == ValueType.OBJECT) return ObjectValue == null || ObjectValue.Count == 0;
                 return true;
             }
         }
@@ -159,11 +160,13 @@ namespace DataUtilities.ReadableFileFormat
         {
             readonly get
             {
+                if (ObjectValue == null) return Value.Literal(null);
                 if (Has(name)) return ObjectValue[name];
                 return Value.Literal(null);
             }
             set
             {
+                if (ObjectValue == null) return;
                 if (Has(name)) ObjectValue[name] = value;
                 else ObjectValue.Add(name, value);
             }
@@ -173,6 +176,7 @@ namespace DataUtilities.ReadableFileFormat
         {
             get
             {
+                if (ObjectValue == null) return Value.Literal(null);
                 foreach (string name in names)
                 {
                     if (Has(name))
@@ -203,7 +207,7 @@ namespace DataUtilities.ReadableFileFormat
         /// </summary>
         public static Value Object() => new()
         { Type = ValueType.OBJECT, ObjectValue = new Dictionary<string, Value>(), LiteralValue = null, };
-        public static Value Object(Dictionary<string, Value> v) => new()
+        public static Value Object(Dictionary<string, Value>? v) => new()
         { Type = ValueType.OBJECT, ObjectValue = v, LiteralValue = null, };
         public static Value Object(ISerializableText value) => value.SerializeText();
         public static Value Object(ISerializableText[] value)
@@ -262,7 +266,7 @@ namespace DataUtilities.ReadableFileFormat
         /// <summary>
         /// Initializes a <see cref="Value"/> with type of <see cref="ValueType.LITERAL"/>.
         /// </summary>
-        public static Value Literal(string value) => new()
+        public static Value Literal(string? value) => new()
         { Type = ValueType.LITERAL, ObjectValue = null, LiteralValue = value, };
         /// <summary>
         /// Initializes a <see cref="Value"/> with type of <see cref="ValueType.LITERAL"/>.
@@ -287,14 +291,14 @@ namespace DataUtilities.ReadableFileFormat
             return ObjectValue.Remove(name);
         }
 
-        readonly string GetDebuggerDisplay() => Type switch
+        readonly string? GetDebuggerDisplay() => Type switch
         {
             ValueType.OBJECT => "{ . }",
             ValueType.LITERAL => LiteralValue,
             _ => ToString(),
         };
 
-        public readonly T Reference<T>(Dictionary<string, T> map)
+        public readonly T? Reference<T>(Dictionary<string, T> map)
         {
             if (LiteralValue == null) return default;
             if (map.ContainsKey(LiteralValue)) return map[LiteralValue];
@@ -308,8 +312,11 @@ namespace DataUtilities.ReadableFileFormat
         public readonly Dictionary<string, Value> Dictionary()
         {
             Dictionary<string, Value> result = new();
-            foreach (var pair in ObjectValue)
-            { result[pair.Key] = pair.Value; }
+            if (ObjectValue != null)
+            {
+                foreach (var pair in ObjectValue)
+                { result[pair.Key] = pair.Value; }
+            }
             return result;
         }
 
@@ -319,7 +326,7 @@ namespace DataUtilities.ReadableFileFormat
         public readonly string ToSDF(bool minimal = false) => ToSDF(minimal, 0, true);
         readonly string ToSDF(bool minimal, int indent, bool isRoot)
         {
-            string result = "";
+            string result = string.Empty;
 
             if (Type == ValueType.LITERAL)
             {
@@ -333,12 +340,16 @@ namespace DataUtilities.ReadableFileFormat
                 }
                 else
                 {
-                    result += $"\"{(LiteralValue ?? "").Replace(@"\", @"\\").Replace("\"", "\\\"")}\"";
+                    result += $"\"{(LiteralValue ?? string.Empty).Replace(@"\", @"\\").Replace("\"", "\\\"")}\"";
                 }
             }
             else if (Type == ValueType.OBJECT)
             {
-                if (Array == null)
+                if (ObjectValue == null)
+                {
+                    if (!isRoot) result += "{ }";
+                }
+                else if (Array == null)
                 {
                     if (minimal)
                     {
@@ -367,9 +378,9 @@ namespace DataUtilities.ReadableFileFormat
                                 result += "{\r\n";
                                 foreach (var pair in ObjectValue)
                                 {
-                                    result += "".PadLeft(indent + 2, ' ') + $"{pair.Key}: {pair.Value.ToSDF(minimal, indent + 2, false)}\r\n";
+                                    result += new string(' ', indent + 2) + $"{pair.Key}: {pair.Value.ToSDF(minimal, indent + 2, false)}\r\n";
                                 }
-                                result += "".PadLeft(indent, ' ') + "}";
+                                result += new string(' ', indent) + "}";
                             }
                         }
                     }
@@ -394,8 +405,8 @@ namespace DataUtilities.ReadableFileFormat
                         {
                             result += "[\r\n";
                             foreach (var item in arrayValue)
-                            { result += "".PadLeft(indent + 2, ' ') + $"{item.ToSDF(minimal, indent + 2, false)}\r\n"; }
-                            result += "".PadLeft(indent, ' ') + "]";
+                            { result += new string(' ', indent + 2) + $"{item.ToSDF(minimal, indent + 2, false)}\r\n"; }
+                            result += new string(' ', indent) + "]";
                         }
                     }
                 }
@@ -410,7 +421,7 @@ namespace DataUtilities.ReadableFileFormat
         public readonly string ToJSON(bool minimal = false) => ToJSON(minimal, 0);
         readonly string ToJSON(bool minimal, int indent)
         {
-            string result = "";
+            string result = string.Empty;
 
             if (Type == ValueType.LITERAL)
             {
@@ -428,12 +439,24 @@ namespace DataUtilities.ReadableFileFormat
                 }
                 else
                 {
-                    result += $"\"{(LiteralValue ?? "").Replace("\\", "\\\\").Replace("\"", "\\\"")}\"";
+                    result += $"\"{(LiteralValue ?? string.Empty).Replace("\\", "\\\\").Replace("\"", "\\\"")}\"";
                 }
             }
             else if (Type == ValueType.OBJECT)
             {
-                if (Array == null)
+                if (ObjectValue == null)
+                {
+                    if (minimal)
+                    {
+                        result += "{}";
+                    }
+                    else
+                    {
+                        result += "{\r\n";
+                        result += new string(' ', indent) + "}";
+                    }
+                }
+                else if (Array == null)
                 {
                     if (minimal)
                     {
@@ -450,10 +473,10 @@ namespace DataUtilities.ReadableFileFormat
                         result += "{\r\n";
                         foreach (var pair in ObjectValue)
                         {
-                            result += "".PadLeft(indent + 2, ' ') + $"\"{pair.Key}\": {pair.Value.ToJSON(minimal, indent + 2)},\r\n";
+                            result += new string(' ', indent + 2) + $"\"{pair.Key}\": {pair.Value.ToJSON(minimal, indent + 2)},\r\n";
                         }
                         if (result.EndsWith(",\r\n")) result = result[..^3] + "\r\n";
-                        result += "".PadLeft(indent, ' ') + "}";
+                        result += new string(' ', indent) + "}";
                     }
                 }
                 else
@@ -474,10 +497,10 @@ namespace DataUtilities.ReadableFileFormat
                         result += "[\r\n";
                         foreach (var element in arrayValue)
                         {
-                            result += "".PadLeft(indent + 2, ' ') + $"{element.ToJSON(minimal, indent + 2)},\r\n";
+                            result += new string(' ', indent + 2) + $"{element.ToJSON(minimal, indent + 2)},\r\n";
                         }
                         if (result.EndsWith(",\r\n")) result = result[..^3] + "\r\n";
-                        result += "".PadLeft(indent, ' ') + "]";
+                        result += new string(' ', indent) + "]";
                     }
                 }
             }
@@ -485,7 +508,7 @@ namespace DataUtilities.ReadableFileFormat
             return result;
         }
 
-        public override readonly bool Equals(object obj)
+        public override readonly bool Equals(object? obj)
         {
             if (obj is not Value other) return false;
             return Equals(other);
@@ -501,6 +524,8 @@ namespace DataUtilities.ReadableFileFormat
                     }
                 case ValueType.OBJECT:
                     {
+                        if (ObjectValue == null) return false;
+                        if (other.ObjectValue == null) return false;
                         foreach (var pair in ObjectValue)
                         {
                             if (!other.ObjectValue.TryGetValue(pair.Key, out var objValue)) return false;
@@ -530,7 +555,7 @@ namespace DataUtilities.ReadableFileFormat
             return result;
         }
 
-        public static implicit operator string(Value v) => v.String;
+        public static implicit operator string?(Value v) => v.String;
         public static implicit operator bool?(Value v) => v.Bool;
         public static implicit operator int?(Value v) => v.Int;
         public static implicit operator float?(Value v) => v.Float;
@@ -600,8 +625,9 @@ namespace DataUtilities.ReadableFileFormat
         /// Combines <paramref name="b"/> with <paramref name="a"/>.<br/>
         /// <b><paramref name="a"/> will be the base object!</b>
         /// </summary>
-        public static void Combine(Dictionary<string, Value> a, Dictionary<string, Value> b, CombineOptions flags = DefaultCombineOptions)
+        public static void Combine(Dictionary<string, Value>? a, Dictionary<string, Value>? b, CombineOptions flags = DefaultCombineOptions)
         {
+            if (a == null || b == null) return;
             foreach (KeyValuePair<string, Value> pair in b)
             {
                 if (a.TryGetValue(pair.Key, out Value @this))
@@ -633,8 +659,12 @@ namespace DataUtilities.ReadableFileFormat
 
         Location _location;
 
-        public readonly T Object<T>() where T : IDeserializableText
-            => this.Object((T)System.Activator.CreateInstance(typeof(T)));
+        /// <exception cref="System.NullReferenceException"/>
+        public readonly T? Object<T>() where T : IDeserializableText
+        {
+            object instance = System.Activator.CreateInstance(typeof(T)) ?? throw new System.NullReferenceException();
+            return this.Object((T)instance);
+        }
 
         public readonly T Object<T>(T instance) where T : IDeserializableText
         {

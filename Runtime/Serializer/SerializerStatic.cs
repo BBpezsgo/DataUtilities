@@ -384,7 +384,7 @@ namespace DataUtilities.Serializer
         /// </typeparam>
         /// <exception cref="TooSmallUnitException"></exception>
         /// <exception cref="NotImplementedException"></exception>
-        public static byte[] Serialize<TKey, TValue>(Dictionary<TKey, TValue> v, INTEGER_TYPE length = INTEGER_TYPE.INT32)
+        public static byte[] Serialize<TKey, TValue>(Dictionary<TKey, TValue> v, INTEGER_TYPE length = INTEGER_TYPE.INT32) where TKey : notnull
         {
             if (v.Count == 0) { return Serialize(-1); }
 
@@ -412,7 +412,7 @@ namespace DataUtilities.Serializer
         /// </typeparam>
         /// <exception cref="TooSmallUnitException"></exception>
         /// <exception cref="NotImplementedException"></exception>
-        public static byte[] Serialize<TKey, TValue>(Dictionary<TKey, TValue> v, Action<Serializer, TValue> valueSerializer, INTEGER_TYPE length = INTEGER_TYPE.INT32)
+        public static byte[] Serialize<TKey, TValue>(Dictionary<TKey, TValue> v, Action<Serializer, TValue> valueSerializer, INTEGER_TYPE length = INTEGER_TYPE.INT32) where TKey : notnull
         {
             if (v.Count == 0) { return Serialize(-1); }
 
@@ -440,7 +440,7 @@ namespace DataUtilities.Serializer
         /// </typeparam>
         /// <exception cref="TooSmallUnitException"></exception>
         /// <exception cref="NotImplementedException"></exception>
-        public static byte[] Serialize<TKey, TValue>(Dictionary<TKey, TValue> v, Action<Serializer, TKey> keySerializer, INTEGER_TYPE length = INTEGER_TYPE.INT32)
+        public static byte[] Serialize<TKey, TValue>(Dictionary<TKey, TValue> v, Action<Serializer, TKey> keySerializer, INTEGER_TYPE length = INTEGER_TYPE.INT32) where TKey : notnull
         {
             if (v.Count == 0) { return Serialize(-1); }
 
@@ -451,7 +451,7 @@ namespace DataUtilities.Serializer
 
         /// <exception cref="TooSmallUnitException"></exception>
         /// <exception cref="NotImplementedException"></exception>
-        public static byte[] Serialize<TKey, TValue>(Dictionary<TKey, TValue> v, Action<Serializer, TKey> keySerializer, Action<Serializer, TValue> valueSerializer, INTEGER_TYPE length = INTEGER_TYPE.INT32)
+        public static byte[] Serialize<TKey, TValue>(Dictionary<TKey, TValue> v, Action<Serializer, TKey> keySerializer, Action<Serializer, TValue> valueSerializer, INTEGER_TYPE length = INTEGER_TYPE.INT32) where TKey : notnull
         {
             if (v.Count == 0) { return Serialize(-1); }
 

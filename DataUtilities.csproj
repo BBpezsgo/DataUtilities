@@ -3,7 +3,7 @@
   <PropertyGroup>
     <TargetFramework>net6.0</TargetFramework>
     <RootNamespace>DataUtilities</RootNamespace>
-    <Nullable>disable</Nullable>
+    <Nullable>enable</Nullable>
     <LangVersion>9</LangVersion>
     <BaseOutputPath>Build~\bin\</BaseOutputPath>
     <BaseIntermediateOutputPath>Build~\obj\</BaseIntermediateOutputPath>
