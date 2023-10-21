@@ -72,7 +72,7 @@ namespace DataUtilities
                 yeah["xd"] = Value.Literal(555);
                 yeah["list"] = Value.Object(new string[] { "a", "b", "c", "d", "e", "f" });
                 yeah["bol"] = Value.Literal(true);
-                yeah["empty"] = Value.Literal("");
+                yeah["empty"] = Value.Literal(string.Empty);
                 TestSDF(yeah);
             }
             {

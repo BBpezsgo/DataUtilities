@@ -20,7 +20,7 @@ namespace DataUtilities.ReadableFileFormat
             _isNull = false;
         }
 
-        public override string ToString() => IsNull ? "" : $"{Line + 1}:{Column + 1}";
+        public override string ToString() => IsNull ? string.Empty : $"{Line + 1}:{Column + 1}";
     }
 
     public interface ISerializableText

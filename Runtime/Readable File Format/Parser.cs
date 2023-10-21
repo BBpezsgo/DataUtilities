@@ -117,7 +117,7 @@ namespace DataUtilities.ReadableFileFormat
             {
                 ConsumeNext();
                 int endlessSafe = INFINITY;
-                string literalValue = "";
+                string literalValue = string.Empty;
                 while (CurrentCharacter != '"')
                 {
                     if (endlessSafe-- <= 0)

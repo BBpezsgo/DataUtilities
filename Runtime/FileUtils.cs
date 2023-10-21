@@ -307,7 +307,7 @@ namespace DataUtilities.FilePacker
         public IEnumerable<IFile> Files => files;
         public IEnumerable<IFolder> Folders => folders;
 
-        public string FullName => (Parent == null) ? (name ?? "") : (Parent.FullName + '\\' + name);
+        public string FullName => (Parent == null) ? (name ?? string.Empty) : (Parent.FullName + '\\' + name);
         public string? Name => name;
 
         public VirtualThing? this[string name] => (VirtualThing?)GetFolder(name) ?? (VirtualThing?)GetFile(name);

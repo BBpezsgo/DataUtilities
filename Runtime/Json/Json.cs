@@ -97,7 +97,7 @@ namespace DataUtilities.Json
             {
                 ConsumeNext();
                 int endlessSafe = INFINITY;
-                string literalValue = "";
+                string literalValue = string.Empty;
                 while (CurrentCharacter != '"')
                 {
                     if (endlessSafe-- <= 0)
@@ -125,7 +125,7 @@ namespace DataUtilities.Json
             bool isNegative = (CurrentCharacter == '-');
             if (isNegative) ConsumeNext();
             bool isReal = false;
-            string raw = "";
+            string raw = string.Empty;
             int endlessSafe = 100;
             while (digits.Contains(CurrentCharacter) || CurrentCharacter == '.' || CurrentCharacter == 'e')
             {
@@ -168,7 +168,7 @@ namespace DataUtilities.Json
             {
                 ConsumeNext();
                 int endlessSafe = INFINITY;
-                string propertyName = "";
+                string propertyName = string.Empty;
                 while (CurrentCharacter != '"')
                 {
                     if (endlessSafe-- <= 0)

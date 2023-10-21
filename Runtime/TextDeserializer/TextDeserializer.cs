@@ -58,20 +58,20 @@ namespace DataUtilities.Text
         public string ConsumeUntil(string until)
         {
             int found = Content.IndexOf(until);
-            if (found == -1) return "";
+            if (found == -1) return string.Empty;
             return ConsumeUntil(found);
         }
 
         public string ConsumeUntil(params char[] until)
         {
             int found = Content.IndexOfAny(until);
-            if (found == -1) return "";
+            if (found == -1) return string.Empty;
             return ConsumeUntil(found);
         }
 
         public string ConsumeUntil(int until)
         {
-            if (until <= 0) return "";
+            if (until <= 0) return string.Empty;
             string substring = Content[..until];
             Content = Content[(until)..];
 
