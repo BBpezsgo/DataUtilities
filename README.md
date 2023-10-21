@@ -14,10 +14,10 @@ Something: {
 ```
 
 You can parse this with this class:
-https://github.com/BBpezsgo/data-utilities/blob/b85b591dee507732ea73275194c1d3dd64fbc30b/Runtime/Readable%20File%20Format/ReadableFileFormat.cs#L304
+https://github.com/BBpezsgo/DataUtilities/blob/b85b591dee507732ea73275194c1d3dd64fbc30b/Runtime/Readable%20File%20Format/ReadableFileFormat.cs#L304
 
 ## Serialization
 
 You can serialize and deserialize binary data with these classes:
-https://github.com/BBpezsgo/data-utilities/blob/b85b591dee507732ea73275194c1d3dd64fbc30b/Runtime/Serializer/Serializer.cs#L241
-https://github.com/BBpezsgo/data-utilities/blob/b85b591dee507732ea73275194c1d3dd64fbc30b/Runtime/Serializer/Serializer.cs#L29
+https://github.com/BBpezsgo/DataUtilities/blob/b85b591dee507732ea73275194c1d3dd64fbc30b/Runtime/Serializer/Serializer.cs#L241
+https://github.com/BBpezsgo/DataUtilities/blob/b85b591dee507732ea73275194c1d3dd64fbc30b/Runtime/Serializer/Serializer.cs#L29
