@@ -4,6 +4,8 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 
+#nullable enable
+
 namespace DataUtilities.FilePacker
 {
     enum ThingType : byte

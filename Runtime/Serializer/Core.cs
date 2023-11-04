@@ -1,6 +1,8 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
 
+#nullable enable
+
 namespace DataUtilities.Serializer
 {
     public enum INTEGER_TYPE

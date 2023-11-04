@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
 
+#nullable enable
+
 namespace DataUtilities.Serializer
 {
     public static class SerializerStatic

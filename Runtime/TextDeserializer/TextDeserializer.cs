@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Linq;
 
+#nullable enable
+
 namespace DataUtilities.Text
 {
     public class TextDeserializer
@@ -15,7 +17,7 @@ namespace DataUtilities.Text
         uint currentLine = 0;
 
         protected static readonly char[] SpaceCharacters = new char[] { ' ', '\t' };
-        protected static readonly char[] LinebrakCharacters = new char[] { '\r', '\n' };
+        protected static readonly char[] LinebreakCharacters = new char[] { '\r', '\n' };
         protected static readonly char[] WhitespaceCharacters = new char[] { ' ', '\t', '\r', '\n' };
 
 

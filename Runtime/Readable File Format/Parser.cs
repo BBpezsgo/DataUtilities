@@ -1,6 +1,8 @@
 ﻿using System.Collections.Generic;
 using System.IO;
 
+#nullable enable
+
 #if UNITY
 using Debug = UnityEngine.Debug;
 #endif

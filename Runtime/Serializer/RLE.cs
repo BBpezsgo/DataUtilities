@@ -1,5 +1,7 @@
 ﻿using System.Collections.Generic;
 
+#nullable enable
+
 namespace DataUtilities.Compression
 {
     public static class RLE

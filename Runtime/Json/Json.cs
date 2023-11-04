@@ -8,6 +8,8 @@ using System.Linq;
 using Debug = UnityEngine.Debug;
 #endif
 
+#nullable enable
+
 namespace DataUtilities.Json
 {
 
