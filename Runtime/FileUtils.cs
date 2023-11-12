@@ -169,7 +169,9 @@ namespace DataUtilities.FilePacker
             { folderStack.Push(new DirectoryInfo(output)); }
             Deserializer deserializer = new(File.ReadAllBytes(fileInfo.FullName));
 
-            Unpacker unpacker = new(folderStack, deserializer.DeserializeObject<PackHeader>());
+            PackHeader packHeader = new();
+            packHeader.Deserialize(deserializer);
+            Unpacker unpacker = new(folderStack, packHeader);
 
             unpacker.UnpackFolder(deserializer);
         }
@@ -368,7 +370,9 @@ namespace DataUtilities.FilePacker
             folderStack.Push(new VirtualFolder(null));
             Deserializer deserializer = new(data);
 
-            VirtualUnpacker unpacker = new(folderStack, deserializer.DeserializeObject<PackHeader>());
+            PackHeader packHeader = new();
+            packHeader.Deserialize(deserializer);
+            VirtualUnpacker unpacker = new(folderStack, packHeader);
 
             unpacker.UnpackFolder(deserializer);
 

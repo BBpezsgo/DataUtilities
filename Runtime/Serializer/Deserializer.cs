@@ -269,6 +269,7 @@ namespace DataUtilities.Serializer
         /// This creates an instance of <typeparamref name="T"/> and then calls the <see cref="ISerializable{T}.Deserialize(Deserializer)"/> method on the instance.
         /// </summary>
         /// <exception cref="NullReferenceException"/>
+        [RequiresUnreferencedCode("Uses System.Activator.CreateInstance")]
         public T DeserializeObject<T>() where T : ISerializable<T>
         {
             object instanceObj = Activator.CreateInstance(typeof(T)) ?? throw new NullReferenceException();
@@ -319,6 +320,7 @@ namespace DataUtilities.Serializer
             return result;
         }
 
+        [RequiresUnreferencedCode("Uses System.Activator.CreateInstance")]
         public T[] DeserializeObjectArray<T>(INTEGER_TYPE length = INTEGER_TYPE.INT32) where T : ISerializable<T>
         {
             int _length = DeserializeArrayLength(length);

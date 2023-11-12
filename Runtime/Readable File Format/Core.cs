@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 
 #nullable enable
 
@@ -40,6 +41,7 @@ namespace DataUtilities.ReadableFileFormat
 
     public static class Extensions
     {
+        [RequiresUnreferencedCode("Uses System.Activator.CreateInstance")]
         public static T[] Convert<T>(this Value[] self) where T : IDeserializableText
         {
             T[] result = new T[self.Length];

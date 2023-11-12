@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 
 #nullable enable
@@ -662,6 +663,7 @@ namespace DataUtilities.ReadableFileFormat
         Location _location;
 
         /// <exception cref="System.NullReferenceException"/>
+        [RequiresUnreferencedCode("Uses System.Activator.CreateInstance")]
         public readonly T? Object<T>() where T : IDeserializableText
         {
             object instance = System.Activator.CreateInstance(typeof(T)) ?? throw new System.NullReferenceException();
