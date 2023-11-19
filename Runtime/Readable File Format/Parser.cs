@@ -17,21 +17,19 @@ namespace DataUtilities.ReadableFileFormat
     {
         Location CurrentLocation => new(CurrentCharacterIndex, CurrentColumn, CurrentLine);
 
-        public static Value Parse(string data) => new Parser(data)._Parse();
+        public static Value Parse(string data) => new Parser(data).ParseInternal();
 
         public Parser(string data) : base(data + ' ') { }
 
-#pragma warning disable IDE1006 // Naming Styles
-        Value _Parse()
-#pragma warning restore IDE1006 // Naming Styles
+        Value ParseInternal()
         {
             ConsumeCharacters(WhitespaceCharacters);
 
             Value root = Value.Object();
             root.Location = CurrentLocation;
 
-            bool inParentecieses = CurrentCharacter == '{';
-            if (inParentecieses)
+            bool inParenthesis = CurrentCharacter == '{';
+            if (inParenthesis)
             {
                 ConsumeNext();
                 ConsumeCharacters(WhitespaceCharacters);
@@ -50,7 +48,7 @@ namespace DataUtilities.ReadableFileFormat
                 root[propertyName] = propertyValue;
                 ConsumeCharacters(WhitespaceCharacters);
 
-                if (inParentecieses && CurrentCharacter == '}')
+                if (inParenthesis && CurrentCharacter == '}')
                 {
                     ConsumeNext();
                     break;
@@ -161,7 +159,7 @@ namespace DataUtilities.ReadableFileFormat
             }
             else
             {
-                result = new Parser(File.ReadAllText(file))._Parse();
+                result = new Parser(File.ReadAllText(file)).ParseInternal();
                 return true;
             }
         }
