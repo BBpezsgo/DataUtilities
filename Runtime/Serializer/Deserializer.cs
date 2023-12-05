@@ -62,14 +62,14 @@ namespace DataUtilities.Serializer
             this.currentIndex = 0;
         }
 
-        Func<T> GetDeserializerForType<T>()
+        TypeDeserializer<T> GetDeserializerForType<T>()
         {
-            if (!typeDeserializers.TryGetValue(typeof(T), out Delegate? method))
+            if (!TryGetDeserializerForType(out TypeDeserializer<T>? method))
             { throw new NotImplementedException($"Deserializer for type {typeof(T)} not found"); }
-            return ((TypeDeserializer<T>)method).Invoke;
+            return method;
         }
 
-        bool TryGetDeserializerForType<T>([NotNullWhen(true)] out Func<T>? deserializer)
+        bool TryGetDeserializerForType<T>([NotNullWhen(true)] out TypeDeserializer<T>? deserializer)
         {
             if (!typeDeserializers.TryGetValue(typeof(T), out Delegate? method))
             {
@@ -77,7 +77,7 @@ namespace DataUtilities.Serializer
                 return false;
             }
 
-            deserializer = ((TypeDeserializer<T>)method).Invoke;
+            deserializer = (TypeDeserializer<T>)method;
             return true;
         }
 

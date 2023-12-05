@@ -14,4 +14,14 @@ namespace DataUtilities
           System.Runtime.Serialization.SerializationInfo info,
           System.Runtime.Serialization.StreamingContext context) : base(info, context) { }
     }
+
+#if !NET7_0_OR_GREATER
+    [AttributeUsage(AttributeTargets.Class | AttributeTargets.Method, Inherited = false, AllowMultiple = false)]
+    sealed class RequiresUnreferencedCodeAttribute : Attribute
+    {
+        public RequiresUnreferencedCodeAttribute(string _)
+        {
+        }
+    }
+#endif
 }

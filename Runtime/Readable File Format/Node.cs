@@ -167,7 +167,9 @@ namespace DataUtilities.ReadableFileFormat
                 if (Has(name)) return ObjectValue[name];
                 return Value.Literal(null);
             }
+#pragma warning disable IDE0251 // Make member 'readonly'
             set
+#pragma warning restore IDE0251
             {
                 if (ObjectValue == null) return;
                 if (Has(name)) ObjectValue[name] = value;
@@ -287,7 +289,9 @@ namespace DataUtilities.ReadableFileFormat
         public static Value Literal(int value) => new()
         { Type = ValueType.LITERAL, ObjectValue = null, LiteralValue = value.ToString(), };
 
+#pragma warning disable IDE0251 // Make member 'readonly'
         public bool RemoveNode(string name)
+#pragma warning restore IDE0251
         {
             if (Type != ValueType.OBJECT) return false;
             if (ObjectValue == null) return false;
