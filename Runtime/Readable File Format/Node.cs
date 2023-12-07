@@ -308,7 +308,7 @@ namespace DataUtilities.ReadableFileFormat
         public readonly T? Reference<T>(Dictionary<string, T> map)
         {
             if (LiteralValue == null) return default;
-            if (map.ContainsKey(LiteralValue)) return map[LiteralValue];
+            if (map.TryGetValue(LiteralValue, out T? value)) return value;
             Debug.LogWarning($"Reference \"{LiteralValue}\" not found");
             return default;
         }
