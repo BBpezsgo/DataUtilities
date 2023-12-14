@@ -2,6 +2,9 @@
 using System.Collections.Generic;
 using System.Linq;
 
+#pragma warning disable IDE0059 // Unnecessary assignment of a value
+#pragma warning disable IDE0060 // Remove unused parameter
+
 namespace DataUtilities
 {
     using ReadableFileFormat;
