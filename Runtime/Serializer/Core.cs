@@ -12,15 +12,11 @@ namespace DataUtilities.Serializer
         INT32,
     }
 
-    [System.Serializable]
     public class TooSmallUnitException : System.Exception
     {
         public TooSmallUnitException() { }
         public TooSmallUnitException(string message) : base(message) { }
         public TooSmallUnitException(string message, System.Exception inner) : base(message, inner) { }
-        protected TooSmallUnitException(
-          System.Runtime.Serialization.SerializationInfo info,
-          System.Runtime.Serialization.StreamingContext context) : base(info, context) { }
     }
 
     static class Extensions

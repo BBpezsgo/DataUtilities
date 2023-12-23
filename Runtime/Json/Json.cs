@@ -13,15 +13,11 @@ using Debug = UnityEngine.Debug;
 namespace DataUtilities.Json
 {
 
-    [Serializable]
     public class JsonSyntaxException : Exception
     {
         public JsonSyntaxException() { }
         public JsonSyntaxException(string message) : base(message) { }
         public JsonSyntaxException(string message, Exception inner) : base(message, inner) { }
-        protected JsonSyntaxException(
-          System.Runtime.Serialization.SerializationInfo info,
-          System.Runtime.Serialization.StreamingContext context) : base(info, context) { }
     }
 
     public class Parser : Text.TextDeserializer
