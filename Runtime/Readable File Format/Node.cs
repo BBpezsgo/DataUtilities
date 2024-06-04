@@ -110,7 +110,7 @@ namespace DataUtilities.ReadableFileFormat
             {
                 if (ObjectValue == null) return null;
                 Value[] result = new Value[ObjectValue.Count];
-                var childNames = ObjectValue.Keys.ToArray();
+                string[] childNames = ObjectValue.Keys.ToArray();
                 int j = 0;
                 for (int i = 0; i < childNames.Length; i++)
                 {
@@ -265,7 +265,7 @@ namespace DataUtilities.ReadableFileFormat
         {
             Value result = Object();
             foreach (KeyValuePair<string, string> pair in value)
-            { result[pair.Key] = Literal(pair.Value.ToString()); }
+            { result[pair.Key] = Literal(pair.Value); }
             return result;
         }
         /// <summary>
@@ -321,7 +321,7 @@ namespace DataUtilities.ReadableFileFormat
             Dictionary<string, Value> result = new();
             if (ObjectValue != null)
             {
-                foreach (var pair in ObjectValue)
+                foreach (KeyValuePair<string, Value> pair in ObjectValue)
                 { result[pair.Key] = pair.Value; }
             }
             return result;
@@ -361,7 +361,7 @@ namespace DataUtilities.ReadableFileFormat
                     if (minimal)
                     {
                         if (!isRoot) result += "{";
-                        foreach (var pair in ObjectValue)
+                        foreach (KeyValuePair<string, Value> pair in ObjectValue)
                         { result += $"{pair.Key}:{pair.Value.ToSDF(minimal, indent + 2, false)}"; }
                         if (!isRoot) result += "}";
                     }
@@ -375,7 +375,7 @@ namespace DataUtilities.ReadableFileFormat
                         {
                             if (isRoot)
                             {
-                                foreach (var pair in ObjectValue)
+                                foreach (KeyValuePair<string, Value> pair in ObjectValue)
                                 {
                                     result += $"{pair.Key}: {pair.Value.ToSDF(minimal, indent, false)}\r\n";
                                 }
@@ -383,7 +383,7 @@ namespace DataUtilities.ReadableFileFormat
                             else
                             {
                                 result += "{\r\n";
-                                foreach (var pair in ObjectValue)
+                                foreach (KeyValuePair<string, Value> pair in ObjectValue)
                                 {
                                     result += new string(' ', indent + 2) + $"{pair.Key}: {pair.Value.ToSDF(minimal, indent + 2, false)}\r\n";
                                 }
@@ -398,7 +398,7 @@ namespace DataUtilities.ReadableFileFormat
                     if (minimal)
                     {
                         result += "[";
-                        foreach (var item in arrayValue)
+                        foreach (Value item in arrayValue)
                         { result += $"{item.ToSDF(minimal, indent + 2, false)}"; }
                         result += "]";
                     }
@@ -411,7 +411,7 @@ namespace DataUtilities.ReadableFileFormat
                         else
                         {
                             result += "[\r\n";
-                            foreach (var item in arrayValue)
+                            foreach (Value item in arrayValue)
                             { result += new string(' ', indent + 2) + $"{item.ToSDF(minimal, indent + 2, false)}\r\n"; }
                             result += new string(' ', indent) + "]";
                         }
@@ -468,7 +468,7 @@ namespace DataUtilities.ReadableFileFormat
                     if (minimal)
                     {
                         result += "{";
-                        foreach (var pair in ObjectValue)
+                        foreach (KeyValuePair<string, Value> pair in ObjectValue)
                         {
                             result += $"\"{pair.Key}\":{pair.Value.ToJSON(minimal, indent + 2)},";
                         }
@@ -478,7 +478,7 @@ namespace DataUtilities.ReadableFileFormat
                     else
                     {
                         result += "{\r\n";
-                        foreach (var pair in ObjectValue)
+                        foreach (KeyValuePair<string, Value> pair in ObjectValue)
                         {
                             result += new string(' ', indent + 2) + $"\"{pair.Key}\": {pair.Value.ToJSON(minimal, indent + 2)},\r\n";
                         }
@@ -492,7 +492,7 @@ namespace DataUtilities.ReadableFileFormat
                     if (minimal)
                     {
                         result += "[";
-                        foreach (var element in arrayValue)
+                        foreach (Value element in arrayValue)
                         {
                             result += $"{element.ToJSON(minimal, indent + 2)},";
                         }
@@ -502,7 +502,7 @@ namespace DataUtilities.ReadableFileFormat
                     else
                     {
                         result += "[\r\n";
-                        foreach (var element in arrayValue)
+                        foreach (Value element in arrayValue)
                         {
                             result += new string(' ', indent + 2) + $"{element.ToJSON(minimal, indent + 2)},\r\n";
                         }
@@ -533,12 +533,12 @@ namespace DataUtilities.ReadableFileFormat
                     {
                         if (ObjectValue == null) return false;
                         if (other.ObjectValue == null) return false;
-                        foreach (var pair in ObjectValue)
+                        foreach (KeyValuePair<string, Value> pair in ObjectValue)
                         {
                             if (!other.ObjectValue.TryGetValue(pair.Key, out var objValue)) return false;
                             if (!pair.Value.Equals(objValue)) return false;
                         }
-                        foreach (var pair in other.ObjectValue)
+                        foreach (KeyValuePair<string, Value> pair in other.ObjectValue)
                         {
                             if (!ObjectValue.TryGetValue(pair.Key, out var objValue)) return false;
                             if (!pair.Value.Equals(objValue)) return false;
@@ -552,7 +552,7 @@ namespace DataUtilities.ReadableFileFormat
         public static implicit operator Value(bool v) => Value.Literal(v);
         public static implicit operator Value(int v) => Value.Literal(v);
         public static implicit operator Value(float v) => Value.Literal(v);
-        public static implicit operator Value(string v) => Value.Literal(v);
+        public static implicit operator Value(string? v) => Value.Literal(v);
         public static implicit operator Value(Value[] v)
         {
             Value result = Value.Object();
@@ -569,7 +569,6 @@ namespace DataUtilities.ReadableFileFormat
 
         public static bool operator ==(Value left, Value right) => left.Equals(right);
         public static bool operator !=(Value left, Value right) => !(left == right);
-
 
         [System.Flags]
         public enum CombineOptions : ushort
@@ -606,7 +605,8 @@ namespace DataUtilities.ReadableFileFormat
                         this.ObjectValue = other.ObjectValue;
                     }
                 }
-                else throw new System.NotImplementedException();
+                else
+                { throw new System.NotImplementedException(); }
             }
             else if (this.Type == ValueType.OBJECT)
             {
@@ -623,9 +623,11 @@ namespace DataUtilities.ReadableFileFormat
                 {
                     Value.Combine(this.ObjectValue, other.ObjectValue, flags);
                 }
-                else throw new System.NotImplementedException();
+                else
+                { throw new System.NotImplementedException(); }
             }
-            else throw new System.NotImplementedException();
+            else
+            { throw new System.NotImplementedException(); }
         }
 
         /// <summary>
